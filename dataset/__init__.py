@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 
+# Just a dict to avoid using 4 strings for 3 values
 STATUS_CODE = {
     "Negative": '-',
     "Positive": '+',
@@ -9,13 +10,26 @@ STATUS_CODE = {
 
 
 def find_receptor_status(soup, selector):
+    """
+    The function takes as input the BeautifulSoup-parsed XML tree and a selector and returns the value of the tag if
+    the tag exists and the procurement was actually completed.
+    :param soup: a BeautifulSoup object
+    :param selector: the tag name as string
+    :return: the tag value or ?
+    """
     tag = soup.find(name=selector)
     if tag is None or tag["procurement_status"] != "Completed":
         return '?'
     return STATUS_CODE[tag.text]
 
 
-def identify_subtype(clinical_filename):
+def identify_breast_cancer_subtype(clinical_filename):
+    """
+    The function takes as input the file name of a clinical file from TCGA and returns the breast cancer subtype
+    according to the er, pr and her2 receptor statuses.
+    :param clinical_filename: the filename of the clinical file from TCGA
+    :return: a string containing the subtype of breast cancer
+    """
     with open(clinical_filename, 'r', encoding="utf-8") as input_file:
         raw_xml = input_file.read()
 
