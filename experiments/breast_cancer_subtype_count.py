@@ -1,6 +1,8 @@
 from dataset import identify_breast_cancer_subtype
 import os
 
+# Experiment to classify the breast cancer subtypes in TCGA
+
 statuses = {
     "LuminalA": 0,
     "LuminalB": 0,
