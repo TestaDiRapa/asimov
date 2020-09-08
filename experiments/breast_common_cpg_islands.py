@@ -1,10 +1,11 @@
 from dataset.methylation450 import filter_cpg_islands
+import pickle
 
 # First test to create a training dataset for the autoencoder
 
 islands, num_files = filter_cpg_islands("../data/breast_methylation_450")
-print(islands)
-print(num_files)
+pickle.dump(islands, open("../data/breast_methylation_450.pkl", "wb"))
+
 count = {
     "100-90": 0,
     "89-80": 0,
@@ -19,7 +20,7 @@ count = {
 }
 
 for cpg, count in islands.items():
-    percentage = count*100/islands
+    percentage = count*100/cpg
     if percentage >= 90:
         count["100-90"] += 1
     elif percentage >= 80:
