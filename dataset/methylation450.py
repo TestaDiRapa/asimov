@@ -16,7 +16,6 @@ def filter_cpg_islands(folder):
     for dir_, _, files in os.walk(folder):
         for file in files:
             if re.search(r'^jhu-usc\..+txt$', file):
-                print(file)
                 files_counter += 1
                 dataset = pd.read_csv(os.path.join(dir_, file), sep='\t', na_values="NA")
                 dataset = dataset[["Composite Element REF", "Beta_value"]].dropna()
@@ -25,5 +24,4 @@ def filter_cpg_islands(folder):
                         islands[cpg] += 1
                     else:
                         islands[cpg] = 1
-    print("Files elapsed: {}".format(files_counter))
     return islands, files_counter
