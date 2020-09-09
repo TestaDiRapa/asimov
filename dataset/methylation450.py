@@ -4,6 +4,12 @@ import re
 
 
 def folder_generator(folders, file_filter):
+    """
+    Generator that yields the path of all the files that match a certain regex in a list of subfolders
+    :param folders: An iterable containing the folders
+    :param file_filter: 
+    :return:
+    """
     for folder in folders:
         for dir_, _, files in os.walk(folder):
             for file in files:
