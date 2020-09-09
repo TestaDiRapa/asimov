@@ -3,20 +3,6 @@ import os
 import re
 
 
-def folder_generator(folders, file_filter):
-    """
-    Generator that yields the path of all the files that match a certain regex in a list of subfolders
-    :param folders: An iterable containing the folders
-    :param file_filter: 
-    :return:
-    """
-    for folder in folders:
-        for dir_, _, files in os.walk(folder):
-            for file in files:
-                if re.search(file_filter, file):
-                    yield os.path.join(dir_, file)
-
-
 def filter_cpg_islands(folders):
     """
     The function takes a folder containing TCGA methylation files from Illumina 450 and returns a tuple containing the
@@ -37,3 +23,17 @@ def filter_cpg_islands(folders):
             else:
                 islands[cpg] = 1
     return islands, files_counter
+
+
+def folder_generator(folders, file_filter):
+    """
+    Generator that yields the path of all the files that match a certain regex in a list of subfolders
+    :param folders: An iterable containing the folders
+    :param file_filter:
+    :return:
+    """
+    for folder in folders:
+        for dir_, _, files in os.walk(folder):
+            for file in files:
+                if re.search(file_filter, file):
+                    yield os.path.join(dir_, file)
