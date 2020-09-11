@@ -52,6 +52,8 @@ def folder_generator(folders, file_filter):
     :param file_filter: a regex
     :return: a file path
     """
+    if type(folders) is not list:
+        folders = [folders]
     for folder in folders:
         for dir_, _, files in os.walk(folder):
             for file in files:
