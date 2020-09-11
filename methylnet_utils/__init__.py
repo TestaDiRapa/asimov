@@ -12,15 +12,12 @@ def generate_subtype_methylation_array(clinical_folder, methylation_dataset, out
 
     beta = pickle.load(open(methylation_dataset, "rb"))
     barcodes = list(beta.index.values)
-    print(len(barcodes))
     pheno = pd.DataFrame(index=barcodes, columns=["subtype"])
     for barcode in barcodes:
         if barcode.split('-')[3][:2] == "11":
             pheno.loc[barcode] = "control"
         else:
             subject_barcode = '-'.join(barcode.split('-')[:3])
-            print(barcode in barcodes)
-            print('TCGA-PE-A5DD' in subtypes)
             pheno.loc[barcode] = subtypes[subject_barcode]
-    print(pheno)
+    pheno = pheno.dropna()
     pickle.dump({"beta": beta, "pheno": pheno}, open(output_filename, "wb"))
