@@ -34,6 +34,15 @@ def generate_subtype_methylation_array(clinical_folder, methylation_dataset, out
 
 def split_methylation_array_by_pheno(methylation_array_filename, pheno_column, output_folder, val_rate=0.1,
                                      test_rate=0.1):
+    """
+    This function take a methylation array and split it into training, validation and test set keeping the classes
+    balancing
+    :param methylation_array_filename: the methylation array filename
+    :param pheno_column: the column containing the classes
+    :param output_folder: the output folder
+    :param val_rate: the rate of samples to include in the validation set
+    :param test_rate: the rate of samples to include in the test set
+    """
     methylation_array = pickle.load(open(methylation_array_filename, "rb"))
     beta = methylation_array["beta"]
     pheno = methylation_array["pheno"]
