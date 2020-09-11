@@ -5,6 +5,13 @@ import pickle
 
 
 def generate_subtype_methylation_array(clinical_folder, methylation_dataset, output_filename):
+    """
+    This function creates a MethylationArray for methylnet using beta values related to samples and clinical data of the
+    same samples
+    :param clinical_folder: the folder containing the clinical data
+    :param methylation_dataset: the beta values as pandas dataframe
+    :param output_filename: the output filename
+    """
     subtypes = dict()
     for file in folder_generator(clinical_folder, r'xml$'):
         subject_barcode = file.split('.')[-2]
