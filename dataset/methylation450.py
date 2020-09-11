@@ -19,7 +19,7 @@ def create_methylation_dataset(folders, islands):
         barcode = re.search(r'TCGA-[A-Z0-9]{2}-[A-Z0-9]{4}-[A-Z0-9]{3}-[A-Z0-9]{3}-[A-Z0-9]{4}-[A-Z0-9]{2}', path).group()
         dataset["barcode"] = barcode
         new_dataset = new_dataset.append(dataset)
-    new_dataset.set_index("barcode")
+    new_dataset = new_dataset.set_index("barcode")
     return new_dataset
 
 
