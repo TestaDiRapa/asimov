@@ -12,7 +12,10 @@ def create_methylation_dataset(folders, islands):
     :return: a pandas Dataframe
     """
     new_dataset = pd.DataFrame(columns=islands+["barcode"])
+    count = 1
     for path in folder_generator(folders, r'^jhu-usc\..+txt$'):
+        print(count)
+        count += 1
         dataset = pd.read_csv(path, sep='\t', na_values="NA", index_col=0)
         dataset = dataset[["Beta_value"]].dropna().loc[islands].T.reset_index().drop("index", axis=1)
         dataset.columns.name = None

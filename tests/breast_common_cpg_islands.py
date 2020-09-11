@@ -1,12 +1,13 @@
-# from dataset.methylation450 import filter_cpg_islands
+from dataset.methylation450 import filter_cpg_islands
 from dataset.methylation450 import create_methylation_dataset
 import pickle
 
 # First test to create a training dataset for the autoencoder
 
+islands, num_files = filter_cpg_islands(["../data/lung_methylation_450"])
 # islands, num_files = filter_cpg_islands(["../data/breast_methylation_450", "../data/lung_methylation_450"])
-# pickle.dump(islands, open("../data/breast_and_lung.pkl", "wb"))
-islands, num_files = pickle.load(open("../data/breast_and_lung.pkl", "rb")), 893+920
+pickle.dump(islands, open("../data/lung_methylation_450.pkl", "wb"))
+# islands, num_files = pickle.load(open("../data/breast_methylation_450.pkl", "rb")), 893  # +920
 count = {
     "100": 0,
     "99-90": 0,
@@ -53,6 +54,6 @@ print(cpg_islands)
 print(count)
 print(len(cpg_islands))
 
-dataset = create_methylation_dataset(["../data/breast_methylation_450", "../data/lung_methylation_450"], cpg_islands)
-pickle.dump(dataset, open("../data/breast_and_lung_pd.pkl", "wb"))
-dataset.to_csv("../data/breast_and_lung_pd.csv", sep='\t')
+dataset = create_methylation_dataset(["../data/lung_methylation_450"], cpg_islands)
+pickle.dump(dataset, open("../data/lung_methylation_450_pd.pkl", "wb"))
+dataset.to_csv("../data/lung_methylation_450_pd.csv", sep='\t')
