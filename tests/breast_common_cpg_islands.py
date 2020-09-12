@@ -51,6 +51,7 @@ for cpg, num_instances in islands.items():
     else:
         count["9-0"] += 1
 
+print("START")
 for i in range(1, 23):
     dataset = create_methylation_dataset("../data/breast_methylation_450", cpg_islands,
                                          {
