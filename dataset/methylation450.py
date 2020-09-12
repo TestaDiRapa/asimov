@@ -15,7 +15,7 @@ def create_methylation_dataset(folders, islands=None, filters=dict()):
     new_dataset = pd.DataFrame(columns=islands+["barcode"])
     for path in folder_generator(folders, r'^jhu-usc\..+txt$'):
         dataset = pd.read_csv(path, sep='\t', na_values="NA", index_col=0)
-        dataset = dataset.dropna()
+        dataset = dataset[["Beta_value"]+list(filters.keys())].dropna()
         if islands is not None:
             dataset = dataset.loc[islands]
         for col, value in filters.items():
