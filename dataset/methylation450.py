@@ -3,7 +3,7 @@ import os
 import re
 
 
-def create_methylation_dataset(folders, islands, filters=dict()):
+def create_methylation_dataset(folders, islands=None, filters=dict()):
     """
     The function creates a pandas Dataframe where each row is a sample and each column is a CpG island. Only the islands
     passed as parameter are considered.
@@ -15,7 +15,9 @@ def create_methylation_dataset(folders, islands, filters=dict()):
     new_dataset = pd.DataFrame(columns=islands+["barcode"])
     for path in folder_generator(folders, r'^jhu-usc\..+txt$'):
         dataset = pd.read_csv(path, sep='\t', na_values="NA", index_col=0)
-        dataset = dataset.dropna().loc[islands]
+        dataset = dataset.dropna()
+        if islands is not None:
+            dataset = dataset.loc[islands]
         for col, value in filters.items():
             dataset = dataset[dataset[col] == value]
         dataset = dataset[["Beta_value"]].T.reset_index().drop("index", axis=1)
