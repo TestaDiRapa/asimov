@@ -63,11 +63,12 @@ def split_methylation_array_by_pheno(methylation_array_filename, pheno_column, o
             else:
                 train_barcodes.append(b)
 
+    base_filename = methylation_array_filename.split('/')[-1]
     pickle.dump({"beta": beta.loc[train_barcodes], "pheno": pheno.loc[train_barcodes]},
-                open(os.path.join(output_folder, "train"+methylation_array_filename), "wb"))
+                open(os.path.join(output_folder, "train_"+base_filename), "wb"))
 
     pickle.dump({"beta": beta.loc[test_barcodes], "pheno": pheno.loc[test_barcodes]},
-                open(os.path.join(output_folder, "test"+methylation_array_filename), "wb"))
+                open(os.path.join(output_folder, "test_"+base_filename), "wb"))
 
     pickle.dump({"beta": beta.loc[val_barcodes], "pheno": pheno.loc[val_barcodes]},
-                open(os.path.join(output_folder, "val"+methylation_array_filename), "wb"))
+                open(os.path.join(output_folder, "val_"+base_filename), "wb"))
