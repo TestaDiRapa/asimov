@@ -12,15 +12,19 @@ def create_methylation_dataset(folders, islands=None, filters=dict()):
     :param filters: a dict where the key is the column and the value the value used to filter
     :return: a pandas Dataframe
     """
-    new_dataset = pd.DataFrame(columns=islands+["barcode"])
     for path in folder_generator(folders, r'^jhu-usc\..+txt$'):
         dataset = pd.read_csv(path, sep='\t', na_values="NA", index_col=0)
-        dataset = dataset[["Beta_value"]+list(filters.keys())].dropna()
-        if islands is not None:
-            dataset = dataset.loc[islands]
+        dataset.dropna()
+        dataset = dataset.loc[islands]
         for col, value in filters.items():
             dataset = dataset[dataset[col] == value]
-        dataset = dataset[["Beta_value"]].T.reset_index().drop("index", axis=1)
+        filtered_islands = list(dataset.index.values)
+        break
+
+    new_dataset = pd.DataFrame(columns=filtered_islands+["barcode"])
+    for path in folder_generator(folders, r'^jhu-usc\..+txt$'):
+        dataset = pd.read_csv(path, sep='\t', na_values="NA", index_col=0)
+        dataset = dataset[["Beta_value"]].dropna().loc[filtered_islands].T.reset_index().drop("index", axis=1)
         dataset.columns.name = None
         barcode = re.search(r'TCGA-[A-Z0-9]{2}-[A-Z0-9]{4}-[A-Z0-9]{3}-[A-Z0-9]{3}-[A-Z0-9]{4}-[A-Z0-9]{2}', path).group()
         dataset["barcode"] = barcode

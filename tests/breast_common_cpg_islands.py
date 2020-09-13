@@ -53,9 +53,12 @@ for cpg, num_instances in islands.items():
 
 print("START")
 for i in range(1, 23):
+    '''
     dataset = create_methylation_dataset("../data/breast_methylation_450", cpg_islands,
                                          {
                                              "Chromosome": "chr{}".format(i)
                                          })
-    print(dataset.shape)
-    pickle.dump(dataset, open("../data/breast_methylation_ch/breast_chr{}.pkl".format(i), "wb"))
+    '''
+    dataset = pickle.load(open("../data/breast_methylation_ch/breast_chr{}.pkl".format(i), "rb"))
+    print("DATASET SHAPE:", dataset.shape)
+    # pickle.dump(dataset, open("../data/breast_methylation_ch/breast_chr{}.pkl".format(i), "wb"))
