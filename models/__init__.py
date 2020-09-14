@@ -1,3 +1,4 @@
+from methylnet_utils import split_methylation_array_by_pheno
 from tensorflow.keras.utils import Sequence
 import numpy as np
 import pandas as pd
@@ -54,34 +55,15 @@ class MethylationArrayGenerator(Sequence):
 
 
 def methylation_array_kcv(dataset_filename, model_class, model_params, output_target, k=10):
-    dataset = pickle.load(open(dataset_filename, "rb"))
-    barcodes = list(dataset["pheno"].index.values)
-    partition_size = int(len(barcodes)/k)
-    barcodes_partitions = []
-    for i in range(k):
-        barcodes_partitions.append(barcodes[i*partition_size:(i+1)*partition_size])
-
     accuracies = []
-    for val_i, test_i in zip(range(-1, k-1), range(k)):
-        tmp_partitions = [b for b in barcodes_partitions]
-        val_barcodes = tmp_partitions.pop(val_i)
-        test_barcodes = tmp_partitions.pop(test_i)
-        train_barcodes = []
-        for b in tmp_partitions:
-            train_barcodes += b
-
-        training_set = MethylationArrayGenerator(
-            {"pheno": dataset["pheno"].loc[train_barcodes], "beta": dataset["beta"].loc[train_barcodes]},
-            output_target
-        )
-        validation_set = MethylationArrayGenerator(
-            {"pheno": dataset["pheno"].loc[val_barcodes], "beta": dataset["beta"].loc[val_barcodes]},
-            output_target
-        )
-
+    for i in range(k):
+        training_set, test_set, validation_set = split_methylation_array_by_pheno(dataset_filename, output_target)
         model = model_class(**model_params)
-        model.fit(training_set, validation_set, 500)
-        acc = model.evaluate(dataset["beta"].loc[test_barcodes].to_numpy(),
-                            pd.get_dummies(dataset["pheno"][output_target]).to_numpy())
+        model.fit(MethylationArrayGenerator(training_set, output_target),
+                  MethylationArrayGenerator(validation_set, output_target),
+                  500)
+        acc = model.evaluate(test_set["beta"].to_numpy(),
+                             pd.get_dummies(test_set["pheno"][output_target]).to_numpy())
         accuracies.append(acc)
+    print(accuracies)
     return sum(accuracies)/len(accuracies)
