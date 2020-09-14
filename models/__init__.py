@@ -17,7 +17,7 @@ class MethylationArrayGenerator(Sequence):
             self.df = pickle.load(open(df_source, "rb"))
         else:
             self.df = df_source
-        self.df["pheno"] = pd.get_dummies(df["pheno"][label_column])
+        self.df["pheno"] = pd.get_dummies(self.df["pheno"][label_column])
         self.batch_size = batch_size
         self.barcodes = list(self.df["pheno"].index.values)
         self.indexes = np.arange(len(self.barcodes))

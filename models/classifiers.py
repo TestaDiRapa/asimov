@@ -24,7 +24,7 @@ class NeuralClassifier:
         output_layer = Dense(5, activation="sigmoid")(hl_d)
 
         self.model = Model(inputs=input_layer, outputs=output_layer)
-        self.model.save(os.path.join(self.serialization_path, self.model_name+".model"))
+        # self.model.save(os.path.join(self.serialization_path, self.model_name+".model"))
 
         optimizer = Adam(lr=0.001)
         self.model.compile(optimizer=optimizer,
@@ -41,4 +41,4 @@ class NeuralClassifier:
             callbacks=[EarlyStopping(monitor='loss', min_delta=0.1, patience=10)],
             validation_data=validation_set
         )
-        self.model.save_weights(os.path.join(self.serialization_path, self.model_name+".weights"))
+        # self.model.save_weights(os.path.join(self.serialization_path, self.model_name+".weights"))
