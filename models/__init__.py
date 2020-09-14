@@ -81,7 +81,7 @@ def methylation_array_kcv(dataset_filename, model_class, model_params, output_ta
 
         model = model_class(**model_params)
         model.fit(training_set, validation_set, 500)
-        acc = model.predict(dataset["beta"].loc[test_barcodes].to_numpy(),
+        acc = model.evaluate(dataset["beta"].loc[test_barcodes].to_numpy(),
                             pd.get_dummies(dataset["pheno"][output_target]).to_numpy())
         accuracies.append(acc)
     return sum(accuracies)/len(accuracies)
