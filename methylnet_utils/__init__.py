@@ -1,6 +1,5 @@
 from dataset import identify_breast_cancer_subtype
 from dataset.methylation450 import folder_generator
-import os
 import pandas as pd
 import pickle
 import random
@@ -32,16 +31,15 @@ def generate_subtype_methylation_array(clinical_folder, methylation_dataset, out
     pickle.dump({"beta": beta, "pheno": pheno}, open(output_filename, "wb"))
 
 
-def split_methylation_array_by_pheno(methylation_array_filename, pheno_column, output_folder, val_rate=0.1,
-                                     test_rate=0.1):
+def split_methylation_array_by_pheno(methylation_array_filename, pheno_column, val_rate=0.1, test_rate=0.1):
     """
     This function take a methylation array and split it into training, validation and test set keeping the classes
     balancing
     :param methylation_array_filename: the methylation array filename
     :param pheno_column: the column containing the classes
-    :param output_folder: the output folder
     :param val_rate: the rate of samples to include in the validation set
     :param test_rate: the rate of samples to include in the test set
+    :return train, test and validation set
     """
     methylation_array = pickle.load(open(methylation_array_filename, "rb"))
     beta = methylation_array["beta"]
@@ -63,12 +61,6 @@ def split_methylation_array_by_pheno(methylation_array_filename, pheno_column, o
             else:
                 train_barcodes.append(b)
 
-    base_filename = methylation_array_filename.split('/')[-1]
-    pickle.dump({"beta": beta.loc[train_barcodes], "pheno": pheno.loc[train_barcodes]},
-                open(os.path.join(output_folder, "train_"+base_filename), "wb"))
-
-    pickle.dump({"beta": beta.loc[test_barcodes], "pheno": pheno.loc[test_barcodes]},
-                open(os.path.join(output_folder, "test_"+base_filename), "wb"))
-
-    pickle.dump({"beta": beta.loc[val_barcodes], "pheno": pheno.loc[val_barcodes]},
-                open(os.path.join(output_folder, "val_"+base_filename), "wb"))
+    return {"beta": beta.loc[train_barcodes], "pheno": pheno.loc[train_barcodes]},\
+           {"beta": beta.loc[test_barcodes], "pheno": pheno.loc[test_barcodes]},\
+           {"beta": beta.loc[val_barcodes], "pheno": pheno.loc[val_barcodes]}
