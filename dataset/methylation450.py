@@ -15,7 +15,8 @@ def create_methylation_dataset(folders, islands=None, filters=dict()):
     for path in folder_generator(folders, r'^jhu-usc\..+txt$'):
         dataset = pd.read_csv(path, sep='\t', na_values="NA", index_col=0)
         dataset.dropna()
-        dataset = dataset.loc[islands]
+        if islands is not None:
+            dataset = dataset.loc[islands]
         for col, value in filters.items():
             dataset = dataset[dataset[col] == value]
         filtered_islands = list(dataset.index.values)
