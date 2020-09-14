@@ -7,7 +7,8 @@ import os
 
 class NeuralClassifier:
 
-    def __init__(self, input_shape, dropout_rate=0.2, model_serialization_path="models/classifier/", model_name="classifier"):
+    def __init__(self, input_shape, dropout_rate=0.2, model_serialization_path="models/classifier/",
+                 model_name="classifier"):
         self.model = None
         os.makedirs(model_serialization_path)
         self.serialization_path = model_serialization_path
