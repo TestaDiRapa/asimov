@@ -4,7 +4,6 @@ tf.config.experimental.set_memory_growth(gpus[0], True)
 
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import *
-from tensorflow.keras.metrics import BinaryCrossentropy
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
 import os
@@ -47,3 +46,6 @@ class NeuralClassifier:
             validation_data=validation_set
         )
         # self.model.save_weights(os.path.join(self.serialization_path, self.model_name+".weights"))
+
+    def predict(self, x_test):
+        return self.model.predict(x_test)
