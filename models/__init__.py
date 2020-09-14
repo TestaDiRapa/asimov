@@ -51,3 +51,37 @@ class MethylationArrayGenerator(Sequence):
         :return: Two numpy array containing features and labels
         """
         return self.df["beta"].loc[step_barcodes].to_numpy(), self.df["pheno"].loc[step_barcodes].to_numpy()
+
+
+def methylation_array_kcv(dataset_filename, model_class, model_params, output_target, k=10):
+    dataset = pickle.load(open(dataset_filename, "rb"))
+    barcodes = list(dataset["pheno"].index.values)
+    partition_size = int(len(barcodes)/k)
+    barcodes_partitions = []
+    for i in range(k):
+        barcodes_partitions.append(barcodes[i*partition_size:(i+1)*partition_size])
+
+    accuracies = []
+    for val_i, test_i in zip(range(-1, k-1), range(k)):
+        tmp_partitions = [b for b in barcodes_partitions]
+        val_barcodes = tmp_partitions.pop(val_i)
+        test_barcodes = tmp_partitions.pop(test_i)
+        train_barcodes = []
+        for b in tmp_partitions:
+            train_barcodes += b
+
+        training_set = MethylationArrayGenerator(
+            {"pheno": dataset["pheno"].loc[train_barcodes], "beta": dataset["beta"].loc[train_barcodes]},
+            output_target
+        )
+        validation_set = MethylationArrayGenerator(
+            {"pheno": dataset["pheno"].loc[val_barcodes], "beta": dataset["beta"].loc[val_barcodes]},
+            output_target
+        )
+
+        model = model_class(**model_params)
+        model.fit(training_set, validation_set, 500)
+        acc = model.predict(dataset["beta"].loc[test_barcodes].to_numpy(),
+                            pd.get_dummies(dataset["pheno"][output_target]).to_numpy())
+        accuracies.append(acc)
+    return sum(accuracies)/len(accuracies)
