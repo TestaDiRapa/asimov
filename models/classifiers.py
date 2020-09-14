@@ -1,5 +1,6 @@
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import *
+from tensorflow.keras.losses import CategoricalCrossentropy
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
 import numpy as np
@@ -29,7 +30,7 @@ class NeuralClassifier:
 
         optimizer = Adam(lr=0.001)
         self.model.compile(optimizer=optimizer,
-                           loss="binary_crossentropy",
+                           loss=CategoricalCrossentropy(),
                            metrics=["accuracy"])
 
         self.model.summary()
@@ -39,7 +40,7 @@ class NeuralClassifier:
             training_set,
             # batch_size=batch_size,
             epochs=epochs,
-            # callbacks=[EarlyStopping(monitor="val_loss", min_delta=0.1, patience=10)],
+            callbacks=[EarlyStopping(monitor="val_loss", min_delta=0.1, patience=10)],
             validation_data=validation_set
         )
         # self.model.save_weights(os.path.join(self.serialization_path, self.model_name+".weights"))
