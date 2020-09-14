@@ -38,6 +38,7 @@ class NeuralClassifier:
     def fit(self, training_set, validation_set, epochs):
         self.model.fit(
             training_set,
+            verbose = 0,
             # batch_size=batch_size,
             epochs=epochs,
             callbacks=[EarlyStopping(monitor="val_loss", min_delta=0.1, patience=10)],
