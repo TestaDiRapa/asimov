@@ -1,11 +1,8 @@
-import tensorflow as tf
-gpus = tf.config.experimental.list_physical_devices("GPU")
-tf.config.experimental.set_memory_growth(gpus[0], True)
-
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import *
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
+import numpy as np
 import os
 
 
@@ -49,3 +46,10 @@ class NeuralClassifier:
 
     def predict(self, x_test):
         return self.model.predict(x_test)
+
+    def evaluate(self, x_test, y_test):
+        acc = 0
+        for p, r in zip(self.predict(x_test), y_test):
+            if np.argmax(p) == np.argmax(r):
+                acc += 1
+        return acc/len(y_test)
