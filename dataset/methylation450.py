@@ -1,5 +1,5 @@
+from dataset import folder_generator
 import pandas as pd
-import os
 import re
 
 
@@ -54,19 +54,3 @@ def filter_cpg_islands(folders):
             else:
                 islands[cpg] = 1
     return islands, files_counter
-
-
-def folder_generator(folders, file_filter):
-    """
-    Generator that yields the path of all the files that match a certain regex in a list of subfolders
-    :param folders: An iterable containing the folders or a folder name
-    :param file_filter: a regex
-    :return: a file path
-    """
-    if type(folders) is not list:
-        folders = [folders]
-    for folder in folders:
-        for dir_, _, files in os.walk(folder):
-            for file in files:
-                if re.search(file_filter, file):
-                    yield os.path.join(dir_, file)

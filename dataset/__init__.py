@@ -57,3 +57,19 @@ def identify_breast_cancer_subtype(clinical_filename):
 
     else:
         return "Unclear"
+
+
+def folder_generator(folders, file_filter):
+    """
+    Generator that yields the path of all the files that match a certain regex in a list of subfolders
+    :param folders: An iterable containing the folders or a folder name
+    :param file_filter: a regex
+    :return: a file path
+    """
+    if type(folders) is not list:
+        folders = [folders]
+    for folder in folders:
+        for dir_, _, files in os.walk(folder):
+            for file in files:
+                if re.search(file_filter, file):
+                    yield os.path.join(dir_, file)
