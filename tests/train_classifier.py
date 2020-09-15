@@ -1,5 +1,5 @@
 from models import methylation_array_kcv
-from models.classifiers import NeuralClassifier
+from models.classifiers import NeuralClassifier, ConvolutionalClassifier
 """
 from models import MethylationArrayGenerator
 from models.classifiers import NeuralClassifier

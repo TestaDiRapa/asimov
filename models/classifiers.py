@@ -81,11 +81,12 @@ class ConvolutionalClassifier(AbstractClassifier):
         self.generate_model(input_shape)
 
     def generate_model(self, input_shape):
-        input_layer = Input(shape=input_shape)
-        hl_1 = Dense(200, activation="relu")(input_layer)
-        hl_2 = Dense(300, activation="relu")(hl_1)
-        hl_3 = Dense(3000, activation="relu")(hl_2)
-        hl_d = Dropout(self.dropout_rate)(hl_3)
-        output_layer = Dense(6, activation="sigmoid")(hl_d)
+        input_layer = Input(shape=(input_shape, 1))
+        conv_1 = Conv1D(64, 3, activation="relu")(input_layer)
+        conv_2 = Conv1D(32, 3, activation="relu")(conv_1)
+        drop_l = Dropout(self.dropout_rate)(conv_2)
+        conv_3 = Conv1D(16, 3, activation="relu")(drop_l)
+        flat = Flatten()(conv_3)
+        output_layer = Dense(6, activation="sigmoid")(flat)
 
         self.compile_model(input_layer, output_layer, Adam(lr=0.001), CategoricalCrossentropy())
