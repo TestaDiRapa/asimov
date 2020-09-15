@@ -6,6 +6,9 @@ import pickle
 
 
 class MethylationArrayGenerator(Sequence):
+    """
+    This class creates a generator for tensorflow starting from a methylation array
+    """
 
     def __init__(self, df_source, label_column, batch_size=32, shuffle=True):
         """
@@ -55,6 +58,15 @@ class MethylationArrayGenerator(Sequence):
 
 
 def methylation_array_kcv(dataset_filename, model_class, model_params, output_target, k=10):
+    """
+    KCV evaluation of a model that implements AbstractClassifier
+    :param dataset_filename: the methylation array filename
+    :param model_class: the model class
+    :param model_params: a dictionary containing the parameters to init the class
+    :param output_target: the label
+    :param k: the folds
+    :return: the average accuracy
+    """
     accuracies = []
     for i in range(k):
         training_set, test_set, validation_set = split_methylation_array_by_pheno(dataset_filename, output_target)
