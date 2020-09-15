@@ -20,7 +20,7 @@ print(nn.evaluate(X_test, y_real.to_numpy()))
 """
 params = {"input_shape": 100, "model_serialization_path": "../data/models/classifier/", "dropout_rate": 0.3}
 res = methylation_array_kcv("../data/breast_embedded/data_embedded.pkl",
-                            NeuralClassifier,
+                            ConvolutionalClassifier,
                             params,
                             "subtype")
 print(res)

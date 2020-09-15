@@ -37,7 +37,7 @@ class AbstractClassifier(ABC):
             verbose=verbose,
             # batch_size=batch_size,
             epochs=epochs,
-            callbacks=[EarlyStopping(monitor="val_loss", min_delta=0.1, patience=10)],
+            callbacks=[EarlyStopping(monitor="val_loss", min_delta=0.05, patience=10)],
             validation_data=validation_set
         )
         self.__model.save_weights(os.path.join(self.__serialization_path, self.__model_name+".h5"))
@@ -81,12 +81,14 @@ class ConvolutionalClassifier(AbstractClassifier):
         self.generate_model(input_shape)
 
     def generate_model(self, input_shape):
-        input_layer = Input(shape=(input_shape, 1))
-        conv_1 = Conv1D(64, 3, activation="relu")(input_layer)
-        conv_2 = Conv1D(32, 3, activation="relu")(conv_1)
+        input_layer = Input(shape=input_shape)
+        reshaped_input = Reshape((100, 1))(input_layer)
+        conv_1 = Conv1D(128, 4, activation="relu")(reshaped_input)
+        conv_2 = Conv1D(64, 2, activation="relu")(conv_1)
         drop_l = Dropout(self.dropout_rate)(conv_2)
-        conv_3 = Conv1D(16, 3, activation="relu")(drop_l)
+        conv_3 = Conv1D(64, 2, activation="relu")(drop_l)
         flat = Flatten()(conv_3)
-        output_layer = Dense(6, activation="sigmoid")(flat)
+        drop_2 = Dropout(self.dropout_rate)(flat)
+        output_layer = Dense(6, activation="sigmoid")(drop_2)
 
         self.compile_model(input_layer, output_layer, Adam(lr=0.001), CategoricalCrossentropy())
