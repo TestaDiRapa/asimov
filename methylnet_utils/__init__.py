@@ -1,5 +1,5 @@
 from dataset import identify_breast_cancer_subtype
-from dataset.methylation450 import folder_generator
+from dataset import folder_generator
 import pandas as pd
 import pickle
 import random
