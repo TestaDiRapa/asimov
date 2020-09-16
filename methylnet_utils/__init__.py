@@ -5,21 +5,19 @@ import pickle
 import random
 
 
-def generate_subtype_methylation_array(clinical_folder, methylation_dataset, output_filename):
+def generate_subtype_methylation_array(clinical_folder, dataset_w_barcodes):
     """
     This function creates a MethylationArray for methylnet using beta values related to samples and clinical data of the
     same samples
     :param clinical_folder: the folder containing the clinical data
-    :param methylation_dataset: the beta values as pandas dataframe
-    :param output_filename: the output filename
+    :param dataset_w_barcodes: the beta values as pandas dataframe
     """
     subtypes = dict()
     for file in folder_generator(clinical_folder, r'xml$'):
         subject_barcode = file.split('.')[-2]
         subtypes[subject_barcode] = identify_breast_cancer_subtype(file)
 
-    beta = pickle.load(open(methylation_dataset, "rb"))
-    barcodes = list(beta.index.values)
+    barcodes = list(dataset_w_barcodes.index.values)
     pheno = pd.DataFrame(index=barcodes, columns=["subtype"])
     for barcode in barcodes:
         if barcode.split('-')[3][:2] == "11":
@@ -27,8 +25,7 @@ def generate_subtype_methylation_array(clinical_folder, methylation_dataset, out
         else:
             subject_barcode = '-'.join(barcode.split('-')[:3])
             pheno.loc[barcode] = subtypes[subject_barcode]
-    pheno = pheno.dropna()
-    pickle.dump({"beta": beta, "pheno": pheno}, open(output_filename, "wb"))
+    return {"beta": dataset_w_barcodes, "pheno": pheno}
 
 
 def split_methylation_array_by_pheno(methylation_array_filename, pheno_column, val_rate=0.1, test_rate=0.1):
