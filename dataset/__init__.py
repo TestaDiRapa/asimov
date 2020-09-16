@@ -95,7 +95,7 @@ def feature_counter(folders, folders_filter, index_column, columns_filter=None):
         files_counter += 1
         dataset = pd.read_csv(path, sep='\t', na_values="NA")
         if columns_filter is not None:
-            dataset = dataset[columns_filter]
+            dataset = dataset[[index_column]+columns_filter]
         dataset = dataset.dropna()
         for cpg in dataset.loc[:, index_column]:
             if cpg in islands:
