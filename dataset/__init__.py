@@ -1,4 +1,6 @@
 from bs4 import BeautifulSoup
+import os
+import re
 
 # Just a dict to avoid using 4 strings for 3 values
 STATUS_CODE = {
