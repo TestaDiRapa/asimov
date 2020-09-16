@@ -1,10 +1,11 @@
-# from dataset.methylation450 import filter_cpg_islands
-from dataset.methylation450 import create_methylation_dataset
+from dataset import feature_counter
+# from dataset.methylation450 import create_methylation_dataset
 import pickle
 
 # First test to create a training dataset for the autoencoder
 
-# islands, num_files = filter_cpg_islands(["../data/lung_methylation_450"])
+islands, num_files = feature_counter(["../data/lung_methylation_450"], r'^jhu-usc\..+txt$', "Composite Element REF",
+                                     ["Composite Element REF", "Beta_value"])
 # islands, num_files = filter_cpg_islands(["../data/breast_methylation_450", "../data/lung_methylation_450"])
 # pickle.dump(islands, open("../data/lung_methylation_450.pkl", "wb"))
 islands, num_files = pickle.load(open("../data/breast_methylation_450.pkl", "rb")), 893  # +920

@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import os
+import pandas as pd
 import re
 
 # Just a dict to avoid using 4 strings for 3 values
@@ -75,3 +76,30 @@ def folder_generator(folders, file_filter):
             for file in files:
                 if re.search(file_filter, file):
                     yield os.path.join(dir_, file)
+
+
+def feature_counter(folders, folders_filter, index_column, columns_filter=None):
+    """
+    The function takes a folder containing TCGA methylation files from Illumina 450 and returns a tuple containing the
+    number of files elapsed and a dictionary a dictionary where each key is a CpG island and each value is the number
+    of files where the island is not NA.
+    :param folders: a list of string containing the folders
+    :param folders_filter: the regex fir the folder_generator
+    :param index_column: the column containing the features
+    :param columns_filter: the columns to include to exclude NA values
+    :return: a tuple
+    """
+    islands = dict()
+    files_counter = 0
+    for path in folder_generator(folders, folders_filter):
+        files_counter += 1
+        dataset = pd.read_csv(path, sep='\t', na_values="NA")
+        if columns_filter is not None:
+            dataset = dataset[columns_filter]
+        dataset = dataset.dropna()
+        for cpg in dataset.loc[:, index_column]:
+            if cpg in islands:
+                islands[cpg] += 1
+            else:
+                islands[cpg] = 1
+    return islands, files_counter
