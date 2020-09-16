@@ -10,7 +10,7 @@ def generate_subtype_methylation_array(clinical_folder, dataset_w_barcodes):
     This function creates a MethylationArray for methylnet using beta values related to samples and clinical data of the
     same samples
     :param clinical_folder: the folder containing the clinical data
-    :param dataset_w_barcodes: the beta values as pandas dataframe
+    :param dataset_w_barcodes: the values as pandas dataframe with barcodes as index
     """
     subtypes = dict()
     for file in folder_generator(clinical_folder, r'xml$'):
