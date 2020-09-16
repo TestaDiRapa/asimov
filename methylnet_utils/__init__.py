@@ -25,6 +25,9 @@ def generate_subtype_methylation_array(clinical_folder, dataset_w_barcodes):
         else:
             subject_barcode = '-'.join(barcode.split('-')[:3])
             pheno.loc[barcode] = subtypes[subject_barcode]
+    print(dataset_w_barcodes.shape)
+    print(pheno.shape)
+    print(pheno.dropna().shape)
     return {"beta": dataset_w_barcodes, "pheno": pheno}
 
 
