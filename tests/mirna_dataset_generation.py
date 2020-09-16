@@ -1,5 +1,6 @@
 from dataset import feature_counter
 from dataset.mirna_exp import mirna_dataset_creator
+from methylnet_utils import generate_subtype_methylation_array
 import os
 import pickle
 
@@ -52,3 +53,5 @@ print(num_files, len(mirnas.keys()))
 # print(dataset)
 # pickle.dump(dataset, open("../data/mirna_exp.pkl", "wb"))
 dataset = pickle.load(open("../data/mirna_exp.pkl", "rb"))
+met_dataset = generate_subtype_methylation_array("../data/breast_clinical", dataset)
+pickle.dump(met_dataset, open("../data/mirna_exp_ma.pkl", "wb"))
