@@ -47,6 +47,8 @@ for cpg, num_instances in mirnas.items():
     else:
         count["9-0"] += 1
 
-dataset = mirna_dataset_creator(os.path.join("..", "data", "breast_mirna_exp"), final_mirnas)
-print(dataset)
-pickle.dump(dataset, open("../data/mirna_exp.pkl", "rb"))
+print(num_files, len(mirnas.keys()))
+# dataset = mirna_dataset_creator(os.path.join("..", "data", "breast_mirna_exp"), final_mirnas)
+# print(dataset)
+# pickle.dump(dataset, open("../data/mirna_exp.pkl", "wb"))
+dataset = pickle.load(open("../data/mirna_exp.pkl", "rb"))
