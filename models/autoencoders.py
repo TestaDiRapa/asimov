@@ -70,7 +70,7 @@ class AbstractAutoencoder(AbstractModel):
         :param code: The code to decode
         :return: the decoded code
         """
-        return self.__decoder(code)
+        return self.__decoder.predict(code)
 
     def encode(self, x_input):
         """
@@ -78,7 +78,7 @@ class AbstractAutoencoder(AbstractModel):
         :param x_input: the input to encode
         :return: the encoded input
         """
-        return self.__encoder(x_input)
+        return self.__encoder.predict(x_input)
 
 
 class MiRNAEncoder(AbstractAutoencoder):
