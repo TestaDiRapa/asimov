@@ -19,16 +19,23 @@ def generate_subtype_methylation_array(clinical_folder, dataset_w_barcodes):
 
     barcodes = list(dataset_w_barcodes.index.values)
     pheno = pd.DataFrame(index=barcodes, columns=["subtype"])
+    no_match = []
     for barcode in barcodes:
         if barcode.split('-')[3][:2] == "11":
             pheno.loc[barcode] = "Control"
         else:
             subject_barcode = '-'.join(barcode.split('-')[:3])
-            pheno.loc[barcode] = subtypes[subject_barcode]
+            if subject_barcode in subtypes:
+                pheno.loc[barcode] = subtypes[subject_barcode]
+            else:
+                no_match.append(barcode)
+    clean_df = dataset_w_barcodes.drop(no_match)
+    pheno = pheno.drop(no_match)
     print(dataset_w_barcodes.shape)
+    print(clean_df.shape)
     print(pheno.shape)
     print(pheno.dropna().shape)
-    return {"beta": dataset_w_barcodes, "pheno": pheno}
+    return {"beta": clean_df, "pheno": pheno}
 
 
 def split_methylation_array_by_pheno(methylation_array_filename, pheno_column, val_rate=0.1, test_rate=0.1):
