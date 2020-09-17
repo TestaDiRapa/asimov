@@ -112,8 +112,8 @@ class MiRNAEncoder(AbstractAutoencoder):
         :param model_name: the model name
         """
         super().__init__(model_serialization_path, model_name)
-        self.generate_model(input_shape)
         self.latent_dimension = latent_dimension
+        self.generate_model(input_shape)
 
     def generate_model(self, input_shape):
         """
@@ -123,7 +123,7 @@ class MiRNAEncoder(AbstractAutoencoder):
         """
         hidden_neurons_1 = 1200
         hidden_neurons_2 = 600
-        hidden_neurons_3 = 300
+        hidden_neurons_3 = 500
         
         encoder_input_layer = Input(shape=input_shape)
         encoder_layer_1 = Dense(hidden_neurons_1, activation="relu")(encoder_input_layer)

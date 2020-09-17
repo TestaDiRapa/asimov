@@ -9,10 +9,11 @@ dataset = pickle.load(open("../data/mirna_exp.pkl", "rb"))
 val_size = int(dataset.shape[0]*0.1)
 validation_set = AutoencoderGenerator(dataset.iloc[:val_size, :])
 training_set = AutoencoderGenerator(dataset.iloc[val_size:, :])
-mirna_encoder = MiRNAEncoder(1881, model_serialization_path="../data/models/")
+ld = 50
+mirna_encoder = MiRNAEncoder(1881, latent_dimension=ld, model_serialization_path="../data/models/")
 mirna_encoder.fit(training_set, validation_set, 2000)
 class_dataset = mirna_encoder.encode_methylation_array(pickle.load(open("../data/mirna_exp_ma.pkl", "rb")))
-params = {"input_shape": 100, "model_serialization_path": "../data/models/classifier/", "dropout_rate": 0.3}
+params = {"input_shape": ld, "model_serialization_path": "../data/models/classifier/", "dropout_rate": 0.3}
 res = methylation_array_kcv(class_dataset,
                             NeuralClassifier,
                             params,
