@@ -63,7 +63,7 @@ class ConvolutionalClassifier(AbstractModel):
         :return: None
         """
         input_layer = Input(shape=input_shape)
-        reshaped_input = Reshape((100, 1))(input_layer)
+        reshaped_input = Reshape((input_shape, 1))(input_layer)
         conv_1 = Conv1D(128, 4, activation="relu")(reshaped_input)
         conv_2 = Conv1D(64, 2, activation="relu")(conv_1)
         drop_l = Dropout(self.dropout_rate)(conv_2)
