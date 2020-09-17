@@ -31,10 +31,6 @@ def generate_subtype_methylation_array(clinical_folder, dataset_w_barcodes):
                 no_match.append(barcode)
     clean_df = dataset_w_barcodes.drop(no_match)
     pheno = pheno.drop(no_match)
-    print(dataset_w_barcodes.shape)
-    print(clean_df.shape)
-    print(pheno.shape)
-    print(pheno.dropna().shape)
     return {"beta": clean_df, "pheno": pheno}
 
 
@@ -74,3 +70,41 @@ def split_methylation_array_by_pheno(methylation_array_source, pheno_column, val
     return {"beta": beta.loc[train_barcodes], "pheno": pheno.loc[train_barcodes]},\
            {"beta": beta.loc[test_barcodes], "pheno": pheno.loc[test_barcodes]},\
            {"beta": beta.loc[val_barcodes], "pheno": pheno.loc[val_barcodes]}
+
+
+def cut_index_barcode(methylation_array):
+    new_pheno = methylation_array["pheno"]
+    new_pheno["barcode"] = ""
+    new_beta = methylation_array["beta"]
+    new_beta["barcode"] = ""
+
+    for barcode in new_pheno.index.values:
+        new_barcode = "-".join(barcode.split("-")[:4])
+        new_pheno.at[barcode, "barcode"] = new_barcode
+        new_beta.at[barcode, "barcode"] = new_barcode
+
+    new_pheno = new_pheno.set_index("barcode")
+    new_beta = new_beta.set_index("barcode")
+    return {"beta": new_beta, "pheno": new_pheno}
+
+
+def merge_methylation_arrays(*args):
+    """
+    This functions merges several methylation arrays into a single methylation array using the common row by index. The
+    barcode-subtype couple in each pheno must be the same
+    :param args: the methylation arrays
+    :return: a single methylation array
+    """
+    barcodes_all = []
+    reindexed_arrays = []
+    for methylation_array in args:
+        reindexed_ma = cut_index_barcode(methylation_array)
+        barcodes_all.append(set(reindexed_ma["pheno"].index.drop_duplicates(keep=False).values))
+        reindexed_arrays.append(reindexed_ma)
+
+    barcodes = barcodes_all[0]
+    for b in barcodes_all[1:]:
+        barcodes = barcodes.intersection(b)
+
+    final_beta = pd.concat([methylation_array["beta"].loc[barcodes] for methylation_array in reindexed_arrays], axis=1)
+    return {"beta": final_beta, "pheno": reindexed_arrays[0]["pheno"].loc[barcodes]}
