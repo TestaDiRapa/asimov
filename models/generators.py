@@ -3,6 +3,7 @@ from tensorflow.keras.utils import Sequence
 import numpy as np
 import pandas as pd
 import pickle
+from sklearn import preprocessing
 
 
 class AbstractGenerator(ABC):
@@ -124,9 +125,10 @@ class AutoencoderGenerator(Sequence):
             self.df = pickle.load(open(df_source, "rb"))
         else:
             self.df = df_source
+        scaler = preprocessing.MinMaxScaler()
+        self.df = scaler.fit_transform(self.df.values)
         self.batch_size = batch_size
-        self.barcodes = list(self.df.index.values)
-        self.indexes = np.arange(len(self.barcodes))
+        self.indexes = np.arange(self.df.shape[0])
         self.shuffle = shuffle
         self.on_epoch_end()
 
@@ -135,18 +137,17 @@ class AutoencoderGenerator(Sequence):
         Calculates the number of batches per epoch
         :return: number of batches per epoch
         """
-        return int(np.floor(len(self.barcodes) / self.batch_size))
+        return int(np.floor(len(self.indexes) / self.batch_size))
 
     def __getitem__(self, index):
         tmp_indexes = self.indexes[index * self.batch_size:(index + 1) * self.batch_size]
-        step_barcodes = [self.barcodes[k] for k in tmp_indexes]
-        return self.__data_generation(step_barcodes)
+        return self.__data_generation(tmp_indexes)
 
     def on_epoch_end(self):
         """
         Updates data indexes after each epoch
         """
-        self.indexes = np.arange(len(self.barcodes))
+        self.indexes = np.arange(self.df.shape[0])
         if self.shuffle:
             np.random.shuffle(self.indexes)
 
@@ -156,4 +157,4 @@ class AutoencoderGenerator(Sequence):
         :param step_barcodes: the indexes of the rows
         :return: Two numpy array containing features and labels
         """
-        return self.df.loc[step_barcodes].to_numpy(), self.df.loc[step_barcodes].to_numpy()
+        return self.df[step_barcodes, :], self.df[step_barcodes, :]
