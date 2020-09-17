@@ -2,7 +2,7 @@ from abc import abstractmethod
 from models import AbstractModel
 from sklearn import preprocessing
 from tensorflow.keras.layers import *
-from tensorflow.keras.losses import CategoricalCrossentropy
+from tensorflow.keras.losses import *
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
 import pandas as pd
@@ -90,11 +90,8 @@ class AbstractAutoencoder(AbstractModel):
         """
         scaler = preprocessing.MinMaxScaler()
         scaled_betas = scaler.fit_transform(methylation_array["beta"].values)
-        print(scaled_betas.shape)
         embedded_betas = self.__encoder.predict(scaled_betas)
-        print(embedded_betas.shape)
         new_betas = pd.DataFrame(data=embedded_betas, index=list(methylation_array["pheno"].index.values))
-        print(new_betas.shape)
         return {"beta": new_betas, "pheno": methylation_array["pheno"]}
 
 
@@ -123,7 +120,7 @@ class MiRNAEncoder(AbstractAutoencoder):
         """
         hidden_neurons_1 = 1200
         hidden_neurons_2 = 600
-        hidden_neurons_3 = 500
+        hidden_neurons_3 = 300
         
         encoder_input_layer = Input(shape=input_shape)
         encoder_layer_1 = Dense(hidden_neurons_1, activation="relu")(encoder_input_layer)
@@ -142,4 +139,4 @@ class MiRNAEncoder(AbstractAutoencoder):
         model_input = Input(shape=input_shape)
         code = self.encoder_layer(model_input)
         model_output = self.decoder_layer(code)
-        self.compile_model(model_input, model_output, Adam(lr=0.001), CategoricalCrossentropy())
+        self.compile_model(model_input, model_output, Adam(lr=0.001), CosineSimilarity())
