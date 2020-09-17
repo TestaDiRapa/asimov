@@ -103,7 +103,7 @@ def methylation_array_kcv(dataset, model_class, model_params, output_target, k=1
     :param verbose: verbose mode for fit method
     :return: the average accuracy
     """
-    accuracies = []
+    test_accuracies, val_accuracies = [], []
     for i in range(k):
         training_set, test_set, validation_set = split_methylation_array_by_pheno(dataset, output_target)
         model = model_class(**model_params)
@@ -111,7 +111,8 @@ def methylation_array_kcv(dataset, model_class, model_params, output_target, k=1
                   MethylationArrayGenerator(validation_set, output_target),
                   500,
                   verbose=verbose)
-        acc = model.evaluate(test_set["beta"].to_numpy(),
-                             pd.get_dummies(test_set["pheno"][output_target]).to_numpy())
-        accuracies.append(acc)
-    return sum(accuracies)/len(accuracies)
+        test_accuracies.append(model.evaluate(test_set["beta"].to_numpy(),
+                               pd.get_dummies(test_set["pheno"][output_target]).to_numpy()))
+        val_accuracies.append(model.evaluate(validation_set["beta"].to_numpy(),
+                                             validation_set["pheno"].to_numpy()))
+    return sum(val_accuracies)/len(val_accuracies), sum(test_accuracies)/len(test_accuracies)
