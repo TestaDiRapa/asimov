@@ -92,23 +92,25 @@ class AbstractModel(ABC):
         self.__model.save_weights(os.path.join(self.__serialization_path, self.__model_name + ".h5"))
 
 
-def methylation_array_kcv(dataset_filename, model_class, model_params, output_target, k=10):
+def methylation_array_kcv(dataset, model_class, model_params, output_target, k=10, verbose=0):
     """
     KCV evaluation of a model that implements AbstractClassifier
-    :param dataset_filename: the methylation array filename
+    :param dataset: the methylation array filename or the methylation array itself
     :param model_class: the model class
     :param model_params: a dictionary containing the parameters to init the class
     :param output_target: the label
     :param k: the folds
+    :param verbose: verbose mode for fit method
     :return: the average accuracy
     """
     accuracies = []
     for i in range(k):
-        training_set, test_set, validation_set = split_methylation_array_by_pheno(dataset_filename, output_target)
+        training_set, test_set, validation_set = split_methylation_array_by_pheno(dataset, output_target)
         model = model_class(**model_params)
         model.fit(MethylationArrayGenerator(training_set, output_target),
                   MethylationArrayGenerator(validation_set, output_target),
-                  500)
+                  500,
+                  verbose=verbose)
         acc = model.evaluate(test_set["beta"].to_numpy(),
                              pd.get_dummies(test_set["pheno"][output_target]).to_numpy())
         accuracies.append(acc)
