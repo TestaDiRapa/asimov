@@ -27,10 +27,11 @@ class AbstractModel(ABC):
         self.__model_name = model_name
 
     @abstractmethod
-    def generate_model(self, input_shape):
+    def generate_model(self, input_shape, output_shape):
         """
         Method that the subclasses must implement, defines the model itself
         :param input_shape: the input shape
+        :param output_shape: the output shape
         :return: None
         """
         pass

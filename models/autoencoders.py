@@ -58,10 +58,11 @@ class AbstractAutoencoder(AbstractModel):
         return self.__decoder(decoder_input)
 
     @abstractmethod
-    def generate_model(self, input_shape):
+    def generate_model(self, input_shape, output_shape):
         """
         Method that the subclasses must implement, defines the model itself
         :param input_shape: the input shape
+        :param output_shape: the output shape
         :return: None
         """
         pass
@@ -110,12 +111,13 @@ class MiRNAEncoder(AbstractAutoencoder):
         """
         super().__init__(model_serialization_path, model_name)
         self.latent_dimension = latent_dimension
-        self.generate_model(input_shape)
+        self.generate_model(input_shape, input_shape)
 
-    def generate_model(self, input_shape):
+    def generate_model(self, input_shape, output_shape):
         """
         Instantiates encoder, decoder and model as NN with 3 hidden layers
         :param input_shape: the input shape
+        :param output_shape: the output shape
         :return: None
         """
         hidden_neurons_1 = 1200
@@ -133,7 +135,7 @@ class MiRNAEncoder(AbstractAutoencoder):
         decoder_layer_1 = Dense(hidden_neurons_3, activation="relu")(decoder_input_layer)
         decoder_layer_2 = Dense(hidden_neurons_2, activation="relu")(decoder_layer_1)
         decoder_layer_3 = Dense(hidden_neurons_1, activation="relu")(decoder_layer_2)
-        decoder_output = Dense(input_shape, activation="sigmoid")(decoder_layer_3)
+        decoder_output = Dense(output_shape, activation="sigmoid")(decoder_layer_3)
         self.generate_decoder(decoder_input_layer, decoder_output)
 
         model_input = Input(shape=input_shape)
