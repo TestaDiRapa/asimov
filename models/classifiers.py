@@ -29,10 +29,11 @@ class NeuralClassifier(AbstractModel):
         :return: None
         """
         input_layer = Input(shape=input_shape)
-        hl_1 = Dense(200, activation="relu")(input_layer)
-        hl_2 = Dense(300, activation="relu")(hl_1)
+        hl_1 = Dense(1000, activation="relu")(input_layer)
+        hl_2 = Dense(1000, activation="relu")(hl_1)
         hl_3 = Dense(3000, activation="relu")(hl_2)
-        hl_d = Dropout(self.dropout_rate)(hl_3)
+        hl_4 = Dense(1000, activation="relu")(hl_3)
+        hl_d = Dropout(self.dropout_rate)(hl_4)
         output_layer = Dense(6, activation="sigmoid")(hl_d)
 
         self.compile_model(input_layer, output_layer, Adam(lr=0.001), CategoricalCrossentropy())
@@ -64,11 +65,36 @@ class ConvolutionalClassifier(AbstractModel):
         """
         input_layer = Input(shape=input_shape)
         reshaped_input = Reshape((input_shape, 1))(input_layer)
-        conv_1 = Conv1D(128, 4, activation="relu")(reshaped_input)
-        conv_2 = Conv1D(64, 2, activation="relu")(conv_1)
-        drop_l = Dropout(self.dropout_rate)(conv_2)
-        conv_3 = Conv1D(64, 2, activation="relu")(drop_l)
-        flat = Flatten()(conv_3)
+        drop_0 = Dropout(self.dropout_rate)(reshaped_input)
+        conv_1 = Conv1D(64, 4, activation="relu")(drop_0)
+        conv_2 = Conv1D(32, 4, activation="relu")(conv_1)
+        drop_1 = Dropout(self.dropout_rate)(conv_2)
+        conv_3 = Conv1D(32, 4, activation="relu")(drop_1)
+        conv_4 = Conv1D(16, 4, activation="relu")(conv_3)
+        conv_5 = Conv1D(8, 4, activation="relu")(conv_4)
+        conv_6 = Conv1D(4, 2, activation="relu")(conv_5)
+        flat = Flatten()(conv_6)
+        drop_2 = Dropout(self.dropout_rate)(flat)
+        output_layer = Dense(6, activation="sigmoid")(drop_2)
+
+        self.compile_model(input_layer, output_layer, Adam(lr=0.001), CategoricalCrossentropy())
+
+    def generate_mode_best(self, input_shape):
+        """
+        Generates the model
+        :param input_shape: the input shape
+        :return: None
+        """
+        input_layer = Input(shape=input_shape)
+        reshaped_input = Reshape((input_shape, 1))(input_layer)
+        conv_1 = Conv1D(32, 4, activation="relu")(reshaped_input)
+        conv_2 = Conv1D(32, 4, activation="relu")(conv_1)
+        drop_1 = Dropout(self.dropout_rate)(conv_2)
+        conv_3 = Conv1D(32, 4, activation="relu")(drop_1)
+        conv_4 = Conv1D(16, 4, activation="relu")(conv_3)
+        conv_5 = Conv1D(8, 4, activation="relu")(conv_4)
+        conv_6 = Conv1D(4, 2, activation="relu")(conv_5)
+        flat = Flatten()(conv_6)
         drop_2 = Dropout(self.dropout_rate)(flat)
         output_layer = Dense(6, activation="sigmoid")(drop_2)
 
