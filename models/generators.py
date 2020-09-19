@@ -73,7 +73,7 @@ class AutoencoderGenerator(Sequence):
             self.df = pickle.load(open(df_source, "rb"))
         else:
             self.df = df_source
-        scaler = preprocessing.MinMaxScaler()
+        scaler = preprocessing.StandardScaler()
         self.df = scaler.fit_transform(self.df.values)
         self.batch_size = batch_size
         self.indexes = np.arange(self.df.shape[0])
