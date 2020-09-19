@@ -22,7 +22,6 @@ mirna_encoder.fit(training_set, validation_set, 500,
 mirna_to_encode = pickle.load(open("../data/mirna_exp_ma.pkl", "rb"))
 mirna_to_encode["beta"] = mirna_to_encode["beta"][over_rate_mirna]
 mirna_dataset = mirna_encoder.encode_methylation_array(mirna_to_encode)
-final_dataset = mirna_dataset
 methylation_dataset = pickle.load(open("../data/breast_embedded/data_embedded.pkl", "rb"))
 final_dataset = merge_methylation_arrays(mirna_dataset, methylation_dataset)
 # not_controls = final_dataset["pheno"]["subtype"] != "Control"
