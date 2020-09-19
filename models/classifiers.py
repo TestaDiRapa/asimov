@@ -60,7 +60,7 @@ class ConvolutionalClassifier(AbstractModel):
         self.dropout_rate = dropout_rate
         self.generate_model(input_shape, output_shape)
 
-    def generate_model(self, input_shape, output_shape):
+    def generate_model_b(self, input_shape, output_shape):
         """
         Generates the model
         :param input_shape: the input shape
@@ -70,8 +70,8 @@ class ConvolutionalClassifier(AbstractModel):
         input_layer = Input(shape=input_shape)
         reshaped_input = Reshape((input_shape, 1))(input_layer)
         drop_0 = Dropout(self.dropout_rate)(reshaped_input)
-        conv_1 = Conv1D(64, 4, activation="relu")(drop_0)
-        conv_2 = Conv1D(32, 4, activation="relu")(conv_1)
+        conv_1 = Conv1D(32, 8, activation="relu")(drop_0)
+        conv_2 = Conv1D(64, 4, activation="relu")(conv_1)
         drop_1 = Dropout(self.dropout_rate)(conv_2)
         conv_3 = Conv1D(32, 4, activation="relu")(drop_1)
         conv_4 = Conv1D(16, 4, activation="relu")(conv_3)
@@ -83,7 +83,7 @@ class ConvolutionalClassifier(AbstractModel):
 
         self.compile_model(input_layer, output_layer, Adam(lr=0.001), CategoricalCrossentropy())
 
-    def generate_model_best(self, input_shape, output_shape):
+    def generate_model(self, input_shape, output_shape):
         """
         Generates the model
         :param input_shape: the input shape

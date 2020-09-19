@@ -120,9 +120,9 @@ class MiRNAEncoder(AbstractAutoencoder):
         :param output_shape: the output shape
         :return: None
         """
-        hidden_neurons_1 = 1200
-        hidden_neurons_2 = 600
-        hidden_neurons_3 = 300
+        hidden_neurons_1 = 400
+        hidden_neurons_2 = 1000
+        hidden_neurons_3 = 200
         
         encoder_input_layer = Input(shape=input_shape)
         encoder_layer_1 = Dense(hidden_neurons_1, activation="relu")(encoder_input_layer)
