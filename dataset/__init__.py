@@ -29,15 +29,15 @@ class BarcodeFinder:
         timeout_flag = True
         while timeout_flag:
             try:
-                driver.get(self.base_url.format(file_uuid))
+                self.driver.get(self.base_url.format(file_uuid))
                 css_selector = "a.unnamed-link[href*='bioId']"
                 time.sleep(3)
-                barcode = driver.find_element_by_css_selector(css_selector).text
+                barcode = self.driver.find_element_by_css_selector(css_selector).text
                 timeout_flag = False
             except TimeoutException:
-                driver.quit()
-                driver = webdriver.Firefox(options=self.driver_options)
-                driver.maximize_window()
+                self.driver.quit()
+                self.driver = webdriver.Firefox(options=self.driver_options)
+                self.driver.maximize_window()
         return barcode
 
     def quit(self):
@@ -148,7 +148,7 @@ def filter_expression_by_rate(dataset, rate):
     total_rows = dataset.shape[0]
     final_columns = []
     for column in dataset.columns:
-        non_zero_rows = dataset[dataset[column] > 0].shape[0]
-        if non_zero_rows/total_rows > rate:
+        non_zero_rows = dataset[column] > 0
+        if sum(non_zero_rows)/total_rows > rate:
             final_columns.append(column)
     return final_columns
