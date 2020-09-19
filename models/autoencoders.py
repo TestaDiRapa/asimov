@@ -169,22 +169,36 @@ class MRNAEncoder(AbstractAutoencoder):
         :param output_shape: the output shape
         :return: None
         """
-        hidden_neurons_1 = input_shape/2
-        hidden_neurons_2 = 1000
-        hidden_neurons_3 = 500
+        hidden_neurons_1 = input_shape//4
+        hidden_neurons_2 = 3000
+        hidden_neurons_3 = 2000
+        hidden_neurons_4 = 5000
+        hidden_neurons_5 = 1000
+        hidden_neurons_6 = 500
+        hidden_neurons_7 = 300
 
         encoder_input_layer = Input(shape=input_shape)
         encoder_layer_1 = Dense(hidden_neurons_1, activation="relu")(encoder_input_layer)
-        encoder_layer_2 = Dense(hidden_neurons_2, activation="relu")(encoder_layer_1)
-        encoder_layer_3 = Dense(hidden_neurons_3, activation="relu")(encoder_layer_2)
-        encoder_output = Dense(self.latent_dimension, activation="sigmoid")(encoder_layer_3)
+        reshaped_layer = Reshape((hidden_neurons_1, 1))(encoder_layer_1)
+        encoder_layer_2 = Conv1D(128, 2, activation="relu")(reshaped_layer)
+        encoder_layer_3 = Conv1D(64, 2, activation="relu")(encoder_layer_2)
+        encoder_layer_4 = Conv1D(32, 2, activation="relu")(encoder_layer_3)
+        encoder_layer_5 = Conv1D(16, 2, activation="relu")(encoder_layer_4)
+        encoder_layer_6 = Conv1D(8, 2, activation="relu")(encoder_layer_5)
+        encoder_layer_7 = Conv1D(4, 2, activation="relu")(encoder_layer_6)
+        flattened = Flatten()(encoder_layer_7)
+        encoder_output = Dense(self.latent_dimension, activation="sigmoid")(flattened)
         self.generate_encoder(encoder_input_layer, encoder_output)
 
         decoder_input_layer = Input(shape=self.latent_dimension)
-        decoder_layer_1 = Dense(hidden_neurons_3, activation="relu")(decoder_input_layer)
-        decoder_layer_2 = Dense(hidden_neurons_2, activation="relu")(decoder_layer_1)
-        decoder_layer_3 = Dense(hidden_neurons_1, activation="relu")(decoder_layer_2)
-        decoder_output = Dense(output_shape, activation="sigmoid")(decoder_layer_3)
+        decoder_layer_1 = Dense(hidden_neurons_7, activation="relu")(decoder_input_layer)
+        decoder_layer_2 = Dense(hidden_neurons_6, activation="relu")(decoder_layer_1)
+        decoder_layer_3 = Dense(hidden_neurons_5, activation="relu")(decoder_layer_2)
+        decoder_layer_4 = Dense(hidden_neurons_4, activation="relu")(decoder_layer_3)
+        decoder_layer_5 = Dense(hidden_neurons_3, activation="relu")(decoder_layer_4)
+        decoder_layer_6 = Dense(hidden_neurons_2, activation="relu")(decoder_layer_5)
+        decoder_layer_7 = Dense(hidden_neurons_1, activation="relu")(decoder_layer_6)
+        decoder_output = Dense(output_shape, activation="sigmoid")(decoder_layer_7)
         self.generate_decoder(decoder_input_layer, decoder_output)
 
         model_input = Input(shape=input_shape)

@@ -9,7 +9,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 import pickle
 
 # Define the latent dimension
-ld = 100
+ld = 200
 
 # Load the dataset and filter the mRNA keeping only the ones that are non 0 for a certain rate of samples
 dataset = pickle.load(open("../data/mrna_exp.pkl", "rb"))
@@ -24,8 +24,7 @@ training_set = AutoencoderGenerator(dataset.iloc[val_size:, :])
 # Autoencoder training
 mrna_encoder = MRNAEncoder(dataset.shape[1], latent_dimension=ld, model_serialization_path="../data/models/")
 mrna_encoder.fit(training_set, validation_set, 50,
-                 # callbacks=[EarlyStopping(monitor="val_loss", min_delta=0.05, patience=10)])
-                 callbacks=[])
+                 callbacks=[EarlyStopping(monitor="val_loss", min_delta=0.05, patience=15)])
 
 # Creating an embedded representation of the mRNA methylation array
 mrna_to_encode = pickle.load(open("../data/mrna_exp_ma.pkl", "rb"))
