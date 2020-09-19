@@ -1,7 +1,11 @@
 from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.firefox.options import Options
 import os
 import pandas as pd
 import re
+import time
 
 # Just a dict to avoid using 4 strings for 3 values
 STATUS_CODE = {
@@ -11,6 +15,33 @@ STATUS_CODE = {
     "Indeterminate": '?'
 }
 
+
+class BarcodeFinder:
+
+    def __init__(self):
+        self.base_url = "https://portal.gdc.cancer.gov/files/{}"
+        self.driver_options = Options()
+        self.driver_options.headless = True
+        self.driver = webdriver.Firefox(options=self.driver_options)
+        self.driver.maximize_window()
+
+    def find_barcode(self, file_uuid):
+        timeout_flag = True
+        while timeout_flag:
+            try:
+                driver.get(self.base_url.format(file_uuid))
+                css_selector = "a.unnamed-link[href*='bioId']"
+                time.sleep(3)
+                barcode = driver.find_element_by_css_selector(css_selector).text
+                timeout_flag = False
+            except TimeoutException:
+                driver.quit()
+                driver = webdriver.Firefox(options=self.driver_options)
+                driver.maximize_window()
+        return barcode
+
+    def quit(self):
+        self.driver.quit()
 
 def find_receptor_status(soup, selector):
     """
