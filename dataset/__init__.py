@@ -43,6 +43,7 @@ class BarcodeFinder:
     def quit(self):
         self.driver.quit()
 
+
 def find_receptor_status(soup, selector):
     """
     The function takes as input the BeautifulSoup-parsed XML tree and a selector and returns the value of the tag if
@@ -104,9 +105,9 @@ def folder_generator(folders, file_filter):
         folders = [folders]
     for folder in folders:
         for dir_, _, files in os.walk(folder):
-            for file in files:
-                if re.search(file_filter, file):
-                    yield os.path.join(dir_, file)
+            for file_ in files:
+                if re.search(file_filter, file_):
+                    yield os.path.join(dir_, file_)
 
 
 def feature_counter(folders, folders_filter, index_column, columns_filter=None):
