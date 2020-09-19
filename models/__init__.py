@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from methylnet_utils import split_methylation_array_by_pheno
 from models.generators import MethylationArrayGenerator
-from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.models import Model
 import numpy as np
 import os
@@ -74,12 +73,13 @@ class AbstractModel(ABC):
                 acc += 1
         return acc/len(y_test)
 
-    def fit(self, training_set, validation_set, epochs, verbose=1):
+    def fit(self, training_set, validation_set, epochs, callbacks=[], verbose=1):
         """
         This method fits the model using the EarlyStopping callback and save the weights
         :param training_set: the training set
         :param validation_set:  the validation set
         :param epochs: the number of epochs
+        :param callbacks: the callbacks to pass to fit method
         :param verbose: 0, 1 or 2 (check tensorflow documentation)
         :return: None
         """
@@ -87,13 +87,13 @@ class AbstractModel(ABC):
             training_set,
             verbose=verbose,
             epochs=epochs,
-            callbacks=[EarlyStopping(monitor="val_loss", min_delta=0.05, patience=10)],
+            callbacks=callbacks,
             validation_data=validation_set
         )
         self.__model.save_weights(os.path.join(self.__serialization_path, self.__model_name + ".h5"))
 
 
-def methylation_array_kcv(dataset, model_class, model_params, output_target, k=10, verbose=0):
+def methylation_array_kcv(dataset, model_class, model_params, output_target, k=10, verbose=0, callbacks=[]):
     """
     KCV evaluation of a model that implements AbstractClassifier
     :param dataset: the methylation array filename or the methylation array itself
@@ -102,6 +102,7 @@ def methylation_array_kcv(dataset, model_class, model_params, output_target, k=1
     :param output_target: the label
     :param k: the folds
     :param verbose: verbose mode for fit method
+    :param callbacks: the callbacks to pass to the fit method
     :return: the average accuracy
     """
     test_accuracies, val_accuracies = [], []
@@ -111,7 +112,8 @@ def methylation_array_kcv(dataset, model_class, model_params, output_target, k=1
         model.fit(MethylationArrayGenerator(training_set, output_target),
                   MethylationArrayGenerator(validation_set, output_target),
                   500,
-                  verbose=verbose)
+                  verbose=verbose,
+                  callbacks=callbacks)
         test_accuracies.append(model.evaluate(test_set["beta"].to_numpy(),
                                pd.get_dummies(test_set["pheno"][output_target]).to_numpy()))
         val_accuracies.append(model.evaluate(validation_set["beta"].to_numpy(),
