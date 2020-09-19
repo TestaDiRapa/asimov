@@ -98,7 +98,7 @@ class AbstractAutoencoder(AbstractModel):
 
 class MiRNAEncoder(AbstractAutoencoder):
     """
-    An autoencoder for mirna data
+    An autoencoder for miRNA data
     """
 
     def __init__(self,  input_shape, latent_dimension=100, model_serialization_path="models/autoencoder/", model_name="autoencoder"):
@@ -124,6 +124,55 @@ class MiRNAEncoder(AbstractAutoencoder):
         hidden_neurons_2 = 1000
         hidden_neurons_3 = 200
         
+        encoder_input_layer = Input(shape=input_shape)
+        encoder_layer_1 = Dense(hidden_neurons_1, activation="relu")(encoder_input_layer)
+        encoder_layer_2 = Dense(hidden_neurons_2, activation="relu")(encoder_layer_1)
+        encoder_layer_3 = Dense(hidden_neurons_3, activation="relu")(encoder_layer_2)
+        encoder_output = Dense(self.latent_dimension, activation="sigmoid")(encoder_layer_3)
+        self.generate_encoder(encoder_input_layer, encoder_output)
+
+        decoder_input_layer = Input(shape=self.latent_dimension)
+        decoder_layer_1 = Dense(hidden_neurons_3, activation="relu")(decoder_input_layer)
+        decoder_layer_2 = Dense(hidden_neurons_2, activation="relu")(decoder_layer_1)
+        decoder_layer_3 = Dense(hidden_neurons_1, activation="relu")(decoder_layer_2)
+        decoder_output = Dense(output_shape, activation="sigmoid")(decoder_layer_3)
+        self.generate_decoder(decoder_input_layer, decoder_output)
+
+        model_input = Input(shape=input_shape)
+        code = self.encoder_layer(model_input)
+        model_output = self.decoder_layer(code)
+        self.compile_model(model_input, model_output, Adam(lr=0.001), CosineSimilarity())
+
+
+class MRNAEncoder(AbstractAutoencoder):
+    """
+    An autoencoder for mRNA data
+    """
+
+    def __init__(self, input_shape, latent_dimension=100, model_serialization_path="models/autoencoder/",
+                 model_name="autoencoder"):
+        """
+        Class constructor
+        :param input_shape: the size of the input
+        :param latent_dimension: the size of  the output
+        :param model_serialization_path: the path where to save the model
+        :param model_name: the model name
+        """
+        super().__init__(model_serialization_path, model_name)
+        self.latent_dimension = latent_dimension
+        self.generate_model(input_shape, input_shape)
+
+    def generate_model(self, input_shape, output_shape):
+        """
+        Instantiates encoder, decoder and model as NN with 3 hidden layers
+        :param input_shape: the input shape
+        :param output_shape: the output shape
+        :return: None
+        """
+        hidden_neurons_1 = input_shape/2
+        hidden_neurons_2 = 1000
+        hidden_neurons_3 = 500
+
         encoder_input_layer = Input(shape=input_shape)
         encoder_layer_1 = Dense(hidden_neurons_1, activation="relu")(encoder_input_layer)
         encoder_layer_2 = Dense(hidden_neurons_2, activation="relu")(encoder_layer_1)
