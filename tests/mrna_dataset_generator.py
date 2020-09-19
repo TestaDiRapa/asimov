@@ -69,7 +69,7 @@ dataset = pickle.load(open("../data/mrna_exp.pkl", "rb"))
 
 # met_dataset = generate_subtype_methylation_array("../data/breast_clinical", dataset)
 # pickle.dump(met_dataset, open("../data/mrna_exp_ma.pkl", "wb"))
-over_rate_mirna = filter_expression_by_rate(dataset, 0.6)
+over_rate_mirna = filter_expression_by_rate(dataset, 0.95)
 print(len(over_rate_mirna))
 dataset = dataset[over_rate_mirna]
 print("Finished")
