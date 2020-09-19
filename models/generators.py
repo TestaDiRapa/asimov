@@ -1,60 +1,8 @@
-from abc import ABC
 from tensorflow.keras.utils import Sequence
 import numpy as np
 import pandas as pd
 import pickle
 from sklearn import preprocessing
-
-
-class AbstractGenerator(ABC):
-    """
-    This class creates a generator for tensorflow starting from a methylation array
-    """
-
-    def __init__(self, df_source, barcodes, batch_size, shuffle=True):
-        """
-        Class constructor
-        :param df_source: the .pkl containing the methylation array or the methylation array itself
-        :param batch_size: the batch size
-        :param barcodes: the barcodes
-        :param shuffle: True if shuffles the samples in a batch
-        """
-        super().__init__()
-        if type(df_source) == str:
-            self.df = pickle.load(open(df_source, "rb"))
-        else:
-            self.df = df_source
-        self.batch_size = batch_size
-        self.barcodes = barcodes
-        self.indexes = np.arange(len(self.barcodes))
-        self.shuffle = shuffle
-
-    def __len__(self):
-        """
-        Calculates the number of batches per epoch
-        :return: number of batches per epoch
-        """
-        return int(np.floor(len(self.barcodes) / self.batch_size))
-
-    def __getitem__(self, index):
-        tmp_indexes = self.indexes[index * self.batch_size:(index + 1) * self.batch_size]
-        step_barcodes = [self.barcodes[k] for k in tmp_indexes]
-        return self.__data_generation(step_barcodes)
-
-    def on_epoch_end(self):
-        """
-        Updates data indexes after each epoch
-        """
-        self.indexes = np.arange(len(self.barcodes))
-        if self.shuffle:
-            np.random.shuffle(self.indexes)
-
-    def data(self):
-        """
-        Getter for the data to iterate
-        :return: the data
-        """
-        return self.df
 
 
 class MethylationArrayGenerator(Sequence):
