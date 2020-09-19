@@ -103,3 +103,20 @@ def feature_counter(folders, folders_filter, index_column, columns_filter=None):
             else:
                 islands[cpg] = 1
     return islands, files_counter
+
+
+def filter_expression_by_rate(dataset, rate):
+    """
+    This function takes a dataset MethylationArray-beta-like and returns all the columns that have a rate of non-zero
+    values higher than the rate parameter
+    :param dataset: the dataset
+    :param rate: the threshold for non-zero values
+    :return: a list of columns
+    """
+    total_rows = dataset.shape[0]
+    final_columns = []
+    for column in dataset.columns:
+        non_zero_rows = dataset[dataset[column] > 0].shape[0]
+        if non_zero_rows/total_rows > rate:
+            final_columns.append(column)
+    return final_columns
