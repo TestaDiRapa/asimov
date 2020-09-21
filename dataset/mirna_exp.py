@@ -3,7 +3,7 @@ import os
 import pandas as pd
 
 
-def mirna_dataset_creator(mirna_folder, mirnas, barcode = True):
+def mirna_dataset_creator(mirna_folder, mirnas, barcode=True):
     """
     This function creates a dictionary where the keys are the mirna filenames and the values the barcodes of the
     subjects
