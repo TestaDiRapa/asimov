@@ -14,11 +14,11 @@ def prepare_dataset(dataset, output_target):
     return x_train, y_train, x_test, y_test
 
 
-def benchmark_svm(dataset, output_target):
+def benchmark_svm(dataset, output_target, verbose=0):
     x_train, y_train, x_test, y_test = prepare_dataset(dataset, output_target)
     params = {
         "C": [0.01, 0.1, 1, 10],
-        "kernel": ["linear", "poly", "rbf"]
+        "kernel": ["linear", "rbf"]
     }
 
     svm = SVC()
@@ -26,19 +26,19 @@ def benchmark_svm(dataset, output_target):
         estimator=svm,
         param_grid=params,
         scoring='accuracy',
-        cv=10,
-        verbose=0,
+        cv=5,
+        verbose=verbose,
         n_jobs=10
     )
     grid_search.fit(x_train, y_train)
     return grid_search.score(x_test, y_test)
 
 
-def benchmark_rf(dataset, output_target):
+def benchmark_rf(dataset, output_target, verbose=0):
     x_train, y_train, x_test, y_test = prepare_dataset(dataset, output_target)
     params = {
-        "n_estimators": [500, 1000, 2000],
-        "max_features": ["auto", "sqrt", "log2"]
+        "n_estimators": [2000],
+        "max_features": ["auto", "sqrt"]
     }
 
     rfc = RandomForestClassifier()
@@ -46,15 +46,15 @@ def benchmark_rf(dataset, output_target):
         estimator=rfc,
         param_grid=params,
         scoring='accuracy',
-        cv=10,
-        verbose=0,
+        cv=5,
+        verbose=verbose,
         n_jobs=10
     )
     grid_search.fit(x_train, y_train)
     return grid_search.score(x_test, y_test)
 
 
-def benchmark_knn(dataset, output_target):
+def benchmark_knn(dataset, output_target, verbose=0):
     x_train, y_train, x_test, y_test = prepare_dataset(dataset, output_target)
     params = {
         "n_neighbors": [5, 10, 50, 100]
@@ -65,8 +65,8 @@ def benchmark_knn(dataset, output_target):
         estimator=knn,
         param_grid=params,
         scoring='accuracy',
-        cv=10,
-        verbose=0,
+        cv=5,
+        verbose=verbose,
         n_jobs=10
     )
     grid_search.fit(x_train, y_train)
