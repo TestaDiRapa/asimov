@@ -1,5 +1,4 @@
 from dataset import filter_expression_by_rate
-from methylnet_utils import merge_methylation_arrays
 from models import methylation_array_kcv
 from models.autoencoders import MRNAEncoder
 from models.benchmark import benchmark_svm, benchmark_rf, benchmark_knn
@@ -30,23 +29,16 @@ mrna_encoder.fit(training_set, validation_set, 2000,
 mrna_to_encode = pickle.load(open("../data/mrna_exp_ma.pkl", "rb"))
 mrna_to_encode["beta"] = mrna_to_encode["beta"][over_rate_mrna]
 mrna_dataset = mrna_encoder.encode_methylation_array(mrna_to_encode)
-# final_dataset = mrna_dataset
-
-# Opens methylation and mirna datasets and joins them
-methylation_dataset = pickle.load(open("../data/breast_embedded/data_embedded.pkl", "rb"))
-mirna_dataset = pickle.load(open("../data/breast_embedded/mirna_embedded.pkl", "rb"))
-final_dataset = merge_methylation_arrays(mirna_dataset, mrna_dataset, methylation_dataset)
 
 # Classification with ML and DL models
-params = {"input_shape": final_dataset["beta"].shape[1], "model_serialization_path": "../data/models/classifier/",
-          "dropout_rate": 0.3, "output_shape": len(final_dataset["pheno"]["subtype"].unique())}
-val_res, test_res = methylation_array_kcv(final_dataset,
-                                          ConvolutionalClassifier,
+params = {"input_shape": mrna_dataset["beta"].shape[1], "model_serialization_path": "../data/models/classifier/",
+          "dropout_rate": 0.3, "output_shape": len(mrna_dataset["pheno"]["subtype"].unique())}
+val_res, test_res = methylation_array_kcv(mrna_dataset,
+                                          NeuralClassifier,
                                           params,
                                           "subtype",
                                           callbacks=[EarlyStopping(monitor="val_loss", min_delta=0.05, patience=10)])
 print("Validation accuracy: {}\nTest accuracy: {}".format(val_res, test_res))
-print("SVM accuracy: {}".format(benchmark_svm(final_dataset, "subtype", verbose=0)))
-print("KNN accuracy: {}".format(benchmark_knn(final_dataset, "subtype", verbose=0)))
-print("RF accuracy: {}".format(benchmark_rf(final_dataset, "subtype", verbose=0)))
-print(final_dataset["pheno"].shape)
+print("SVM accuracy: {}".format(benchmark_svm(mrna_dataset, "subtype", verbose=0)))
+print("KNN accuracy: {}".format(benchmark_knn(mrna_dataset, "subtype", verbose=0)))
+print("RF accuracy: {}".format(benchmark_rf(mrna_dataset, "subtype", verbose=0)))
