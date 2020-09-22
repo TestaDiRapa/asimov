@@ -1,10 +1,10 @@
 from dataset import feature_counter
 from dataset.mirna_exp import mirna_dataset_creator
-from methylnet_utils import generate_subtype_methylation_array
+# from methylnet_utils import generate_subtype_methylation_array
 import os
 import pickle
 
-mirnas, num_files = feature_counter("../data/breast_mirna_exp", r'mirnas\.quantification\.txt$',
+mirnas, num_files = feature_counter("../data/other_mirna_exp", r'mirnas\.quantification\.txt$',
                                     "miRNA_ID", ["reads_per_million_miRNA_mapped"])
 count = {
     "100": 0,
@@ -49,9 +49,9 @@ for cpg, num_instances in mirnas.items():
         count["9-0"] += 1
 
 print(num_files, len(mirnas.keys()))
-# dataset = mirna_dataset_creator(os.path.join("..", "data", "breast_mirna_exp"), final_mirnas)
-# print(dataset)
-# pickle.dump(dataset, open("../data/mirna_exp.pkl", "wb"))
-dataset = pickle.load(open("../data/mirna_exp.pkl", "rb"))
-met_dataset = generate_subtype_methylation_array("../data/breast_clinical", dataset)
-pickle.dump(met_dataset, open("../data/mirna_exp_ma.pkl", "wb"))
+dataset = mirna_dataset_creator(os.path.join("..", "data", "other_mirna_exp"), final_mirnas, barcode=False)
+print(dataset)
+pickle.dump(dataset, open("../data/mirna_exp_all.pkl", "wb"))
+# dataset = pickle.load(open("../data/mirna_exp.pkl", "rb"))
+# met_dataset = generate_subtype_methylation_array("../data/breast_clinical", dataset)
+# pickle.dump(met_dataset, open("../data/mirna_exp_ma.pkl", "wb"))
