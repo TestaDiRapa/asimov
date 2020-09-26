@@ -31,13 +31,13 @@ class NeuralClassifier(AbstractModel):
         :return: None
         """
         input_layer = Input(shape=input_shape)
-        hl_d = Dropout(self.dropout_rate)(input_layer)
-        hl_1 = Dense(4000, activation="relu")(hl_d)
+        pre = Dropout(self.dropout_rate)(input_layer)
+        hl_1 = Dense(4000, activation="relu")(pre)
         # hl_2 = Dense(1000, activation="relu")(hl_1)
         # hl_3 = Dense(3000, activation="relu")(hl_2)
         # hl_4 = Dense(1000, activation="relu")(hl_3)
-        hl_d_2 = Dropout(self.dropout_rate)(hl_1)
-        output_layer = Dense(output_shape, activation="sigmoid")(hl_d_2)
+        hl_d = Dropout(self.dropout_rate)(hl_1)
+        output_layer = Dense(output_shape, activation="sigmoid")(hl_d)
 
         self.compile_model(input_layer, output_layer, Adam(lr=0.001), CategoricalCrossentropy())
 
