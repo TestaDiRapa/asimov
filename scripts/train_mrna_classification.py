@@ -13,7 +13,8 @@ ld = 200
 # Load the dataset and filter the mRNA keeping only the ones that are non 0 for a certain rate of samples
 dataset = pickle.load(open("../data/mrna_exp.pkl", "rb"))
 over_rate_mrna = filter_expression_by_rate(dataset, 0.9)
-dataset = pickle.load(open("../data/mrna_exp_all.pkl", "rb"))[over_rate_mrna]
+# dataset = pickle.load(open("../data/mrna_exp_all.pkl", "rb"))[over_rate_mrna]
+dataset = dataset[over_rate_mrna]
 
 # Generation of training and validation set
 val_size = int(dataset.shape[0]*0.1)
@@ -29,6 +30,7 @@ mrna_encoder.fit(training_set, validation_set, 2000,
 mrna_to_encode = pickle.load(open("../data/mrna_exp_ma.pkl", "rb"))
 mrna_to_encode["beta"] = mrna_to_encode["beta"][over_rate_mrna]
 mrna_dataset = mrna_encoder.encode_methylation_array(mrna_to_encode)
+pickle.dump(mrna_dataset, open("../data/mrna_embedded.pkl", "wb"))
 
 # Classification with ML and DL models
 params = {"input_shape": mrna_dataset["beta"].shape[1], "model_serialization_path": "../data/models/classifier/",

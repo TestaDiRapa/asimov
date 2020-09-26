@@ -11,9 +11,11 @@ methylation_dataset = pickle.load(open("../data/breast_embedded/data_embedded.pk
 # Opens mirna dataset
 mirna_dataset = pickle.load(open("../data/mirna_embedded.pkl", "rb"))
 
+# Opens mirna dataset
+mrna_dataset = pickle.load(open("../data/mrna_embedded.pkl", "rb"))
+
 # Merges the arrays
-final_dataset = merge_methylation_arrays(mirna_dataset, methylation_dataset)
-print(final_dataset)
+final_dataset = merge_methylation_arrays(mirna_dataset, methylation_dataset, mrna_dataset)
 
 # Removes the controls
 # not_controls = final_dataset["pheno"]["subtype"] != "Control"
