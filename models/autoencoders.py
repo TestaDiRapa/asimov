@@ -146,6 +146,9 @@ class MiRNAEncoder(AbstractAutoencoder):
         model_output = self.decoder_layer(code)
         self.compile_model(model_input, model_output, Adam(lr=0.001), CosineSimilarity())
 
+    def __str__(self):
+        return "MiRNAEncoder"
+
 
 class MRNAEncoder(AbstractAutoencoder):
     """
