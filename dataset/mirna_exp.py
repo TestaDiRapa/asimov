@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 from dataset import BarcodeFinder, folder_generator
 import os
 import pandas as pd
+import pickle
 import requests
 
 
@@ -80,3 +81,14 @@ def mirna_genes_interaction(pre_mirna):
         for page in range(1, num_pages+1):
             genes += __get_genes_data(mirna, page)
     return genes
+
+
+def get_interactions_over_threshold(threshold, gene_name, interaction_file="../data/mirna_genes_interaction.pkl"):
+    mirna_interactions = pickle.load(open(interaction_file, "rb"))
+    final_genes = set()
+    for mirna, interactions in mirna_interactions.items():
+        for gene in interactions:
+            if gene[2] >= threshold:
+                final_genes.add(gene[gene_name])
+
+    return list(final_genes)
