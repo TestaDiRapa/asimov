@@ -2,6 +2,7 @@ bs4
 lxml
 numpy
 pandas
+requests
 scikit-learn
 selenium
 tensorflow
