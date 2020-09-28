@@ -8,7 +8,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 import pickle
 
 # Define the latent dimension
-ld = 100
+ld = 200
 
 # Load the dataset and filter the mRNA keeping only the ones that are non 0 for a certain rate of samples
 dataset = pickle.load(open("../data/mirna_exp.pkl", "rb"))
@@ -27,7 +27,7 @@ mirna_encoder.fit(training_set, validation_set, 500,
 
 # Creating an embedded representation of the mRNA methylation array
 mirna_to_encode = pickle.load(open("../data/mirna_exp_ma.pkl", "rb"))
-mirna_to_encode["beta"] = mirna_to_encode["beta"][over_rate_mirna]
+mirna_to_encode["beta"] = mirna_to_encode["beta"]  # [over_rate_mirna]
 mirna_dataset = mirna_encoder.encode_methylation_array(mirna_to_encode)
 pickle.dump(mirna_dataset, open("../data/mirna_embedded.pkl", "wb"))
 
@@ -39,7 +39,7 @@ val_res, test_res = methylation_array_kcv(mirna_dataset,
                                           params,
                                           "subtype",
                                           callbacks=[EarlyStopping(monitor="val_loss", min_delta=0.05, patience=10)])
-print("Validation accuracy: {}\nTest accuracy: {}".format(val_res, test_res))
-print("SVM accuracy: {}".format(benchmark_svm(mirna_dataset, "subtype")))
-print("KNN accuracy: {}".format(benchmark_knn(mirna_dataset, "subtype")))
-print("RF accuracy: {}".format(benchmark_rf(mirna_dataset, "subtype")))
+print("Validation accuracy: {} - Test accuracy: {}".format(val_res, test_res))
+print("SVM validation accuracy: {} - SVM test accuracy: {}".format(*benchmark_svm(mirna_dataset, "subtype")))
+print("KNN validation accuracy: {} - KNN test accuracy: {}".format(*benchmark_knn(mirna_dataset, "subtype")))
+print("RF validation accuracy: {} - RF test accuracy: {}".format(*benchmark_rf(mirna_dataset, "subtype")))
