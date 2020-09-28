@@ -3,6 +3,7 @@ from dataset import folder_generator
 import pandas as pd
 import pickle
 import random
+import time
 
 
 def generate_subtype_methylation_array(clinical_folder, dataset_w_barcodes):
@@ -34,7 +35,7 @@ def generate_subtype_methylation_array(clinical_folder, dataset_w_barcodes):
     return {"beta": clean_df, "pheno": pheno}
 
 
-def split_methylation_array_by_pheno(methylation_array_source, pheno_column, val_rate=0.1, test_rate=0.1):
+def split_methylation_array_by_pheno(methylation_array_source, pheno_column, val_rate=0.1, test_rate=0.1, seed=None):
     """
     This function take a methylation array and split it into training, validation and test set keeping the classes
     balancing
@@ -42,8 +43,13 @@ def split_methylation_array_by_pheno(methylation_array_source, pheno_column, val
     :param pheno_column: the column containing the classes
     :param val_rate: the rate of samples to include in the validation set
     :param test_rate: the rate of samples to include in the test set
+    :param seed: the random seed for the split
     :return train, test and validation set
     """
+    if seed is None:
+        random.seed(int(time.time()*100000000))
+    else:
+        random.seed(seed)
     if type(methylation_array_source) == str:
         methylation_array = pickle.load(open(methylation_array_source, "rb"))
     else:
