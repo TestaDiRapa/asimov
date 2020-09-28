@@ -146,9 +146,9 @@ class MOLIClassifier(AbstractModel):
         :return: None
         """
         input_layer = Input(shape=input_shape)
-        relu_1 = Dense(32, activation="relu")(input_layer)
+        relu_1 = Dense(64, activation="relu")(input_layer)
         drop_1 = Dropout(self.dropout_rate)(relu_1)
-        relu_2 = Dense(32, activation="relu")(drop_1)
+        relu_2 = Dense(64, activation="relu")(drop_1)
         drop_2 = Dropout(self.dropout_rate)(relu_2)
         output_layer = Dense(output_shape, activation="sigmoid")(drop_2)
 

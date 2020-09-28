@@ -4,6 +4,7 @@ from models.benchmark import benchmark_svm, benchmark_rf, benchmark_knn
 from models.classifiers import NeuralClassifier, ConvolutionalClassifier, MOLIClassifier
 from tensorflow.keras.callbacks import EarlyStopping
 import os
+import pandas as pd
 import pickle
 
 logfile_name = "../data/classifiers_stats.tsv"
@@ -21,7 +22,7 @@ methylation = True
 mirna = True
 mrna = True
 cnv = False
-dropout = 0.05
+dropout = 0.3
 dataset_list = []
 
 # Opens methylation dataset
@@ -41,6 +42,21 @@ if mrna:
 
 # Merges the arrays
 final_dataset = merge_methylation_arrays(*dataset_list)
+
+# Just a check on ground truth
+gt_check = pd.read_csv("../data/brca_tcga_pub_clinical_data.tsv", sep="\t", na_filter=False, index_col="Patient ID")
+gt_index = list(gt_check.index.values)
+to_remove = list()
+for index, row in final_dataset["pheno"].iterrows():
+    if row["subtype"] != "control":
+        barcode = "-".join(index.split("-")[:3])
+        if barcode in gt_index and gt_check.loc[barcode]["PAM50 subtype"] != "Normal-like":
+            final_dataset["pheno"].at[index, "subtype"] = gt_check.loc[barcode]["PAM50 subtype"]
+        else:
+            to_remove.append(index)
+
+final_dataset["beta"] = final_dataset["beta"].drop(to_remove)
+final_dataset["pheno"] = final_dataset["pheno"].drop(to_remove)
 
 # Removes the controls
 # not_controls = final_dataset["pheno"]["subtype"] != "Control"
@@ -64,7 +80,7 @@ print("RF validation accuracy: {} - RF test accuracy: {}".format(rf_val, rf_test
 
 with open(logfile_name, 'a') as logfile:
     base = "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n"
-    logfile.write(base.format("MOLIClassifier", methylation, mirna, mrna, cnv, dropout, val_res, test_res))
+    logfile.write(base.format("MOLIClassifier'", methylation, mirna, mrna, cnv, dropout, val_res, test_res))
     logfile.write(base.format("SVM", methylation, mirna, mrna, cnv, dropout, svm_val, svm_test))
     logfile.write(base.format("KNN", methylation, mirna, mrna, cnv, dropout, knn_val, knn_test))
     logfile.write(base.format("RF", methylation, mirna, mrna, cnv, dropout, rf_val, rf_test))
