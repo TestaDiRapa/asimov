@@ -50,7 +50,6 @@ for key, value in stats.items():
     print(key, len(value))
 
 gene_cpg = dict()
-pickle.dump(gene_cpg, open("../data/genes_cpg_interaction.pkl", "wb"))
 
 met_df = pd.read_csv("../data/methylation_example.txt", sep="\t", na_values="NA").dropna()
 for index, row in met_df.iterrows():
@@ -67,7 +66,7 @@ for gene in stats[">90"]:
         count += 1
     else:
         final_cpg = final_cpg.union(gene_cpg[gene])
-
+pickle.dump(gene_cpg, open("../data/genes_cpg_interaction.pkl", "wb"))
 print(final_cpg)
 print("Rejected:", count)
 print(len(final_cpg))
