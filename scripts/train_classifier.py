@@ -17,7 +17,7 @@ if not os.path.exists(logfile_name):
 model = MOLIClassifier
 
 # Logging parameters
-methylation = False
+methylation = True
 mirna = True
 mrna = True
 cnv = False
@@ -26,7 +26,7 @@ dataset_list = []
 
 # Opens methylation dataset
 if methylation:
-    methylation_dataset = pickle.load(open("../data/breast_embedded/data_embedded.pkl", "rb"))
+    methylation_dataset = pickle.load(open("../data/methylation_embedded.pkl", "rb"))
     dataset_list.append(methylation_dataset)
 
 # Opens mirna dataset
