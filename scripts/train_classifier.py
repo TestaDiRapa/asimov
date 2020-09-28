@@ -29,8 +29,8 @@ val_res, test_res = methylation_array_kcv(final_dataset,
                                           "subtype",
                                           callbacks=[EarlyStopping(monitor="val_loss", min_delta=0.05, patience=20)])
 
-print("Validation accuracy: {}\nTest accuracy: {}".format(val_res, test_res))
-print("SVM accuracy: {}".format(benchmark_svm(final_dataset, "subtype")))
-print("KNN accuracy: {}".format(benchmark_knn(final_dataset, "subtype")))
-print("RF accuracy: {}".format(benchmark_rf(final_dataset, "subtype")))
+print("Validation accuracy: {} - Test accuracy: {}".format(val_res, test_res))
+print("SVM validation accuracy: {} - SVM test accuracy: {}".format(*benchmark_svm(final_dataset, "subtype")))
+print("KNN validation accuracy: {} - KNN test accuracy: {}".format(*benchmark_knn(final_dataset, "subtype")))
+print("RF validation accuracy: {} - RF test accuracy: {}".format(*benchmark_rf(final_dataset, "subtype")))
 

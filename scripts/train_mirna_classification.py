@@ -13,7 +13,7 @@ ld = 100
 # Load the dataset and filter the mRNA keeping only the ones that are non 0 for a certain rate of samples
 dataset = pickle.load(open("../data/mirna_exp.pkl", "rb"))
 over_rate_mirna = filter_expression_by_rate(dataset, 0.5)
-dataset = dataset[over_rate_mirna]
+# dataset = dataset[over_rate_mirna]
 
 # Generation of training and validation set
 val_size = int(dataset.shape[0]*0.1)
