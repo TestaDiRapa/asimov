@@ -1,7 +1,7 @@
 from methylnet_utils import merge_methylation_arrays
 from models import methylation_array_kcv
 from models.benchmark import benchmark_svm, benchmark_rf, benchmark_knn
-from models.classifiers import NeuralClassifier, ConvolutionalClassifier, MOLIClassifier
+from models.classifiers import NeuralClassifier, ConvolutionalClassifier, MOLIClassifier, PAMClassifier
 from tensorflow.keras.callbacks import EarlyStopping
 import os
 import pandas as pd
@@ -15,7 +15,7 @@ if not os.path.exists(logfile_name):
         logfile.write('\t'.join(fields))
 
 # Alias for the model
-model = MOLIClassifier
+model = PAMClassifier
 
 # Logging parameters
 methylation = True
@@ -80,7 +80,7 @@ print("RF validation accuracy: {} - RF test accuracy: {}".format(rf_val, rf_test
 
 with open(logfile_name, 'a') as logfile:
     base = "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n"
-    logfile.write(base.format("MOLIClassifier'", methylation, mirna, mrna, cnv, dropout, val_res, test_res))
+    logfile.write(base.format("PAMClassifier'", methylation, mirna, mrna, cnv, dropout, val_res, test_res))
     logfile.write(base.format("SVM", methylation, mirna, mrna, cnv, dropout, svm_val, svm_test))
     logfile.write(base.format("KNN", methylation, mirna, mrna, cnv, dropout, knn_val, knn_test))
     logfile.write(base.format("RF", methylation, mirna, mrna, cnv, dropout, rf_val, rf_test))

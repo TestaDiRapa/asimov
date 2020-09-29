@@ -5,6 +5,7 @@ from models.benchmark import benchmark_svm, benchmark_rf, benchmark_knn
 from models.classifiers import NeuralClassifier, ConvolutionalClassifier, MOLIClassifier
 from models.generators import AutoencoderGenerator
 from tensorflow.keras.callbacks import EarlyStopping
+import pandas as pd
 import pickle
 import os
 
@@ -19,7 +20,7 @@ if not os.path.exists(logfile_name):
 ld = 200
 
 # Load the dataset and filter the mRNA keeping only the ones that are non 0 for a certain rate of samples
-dataset = pickle.load(open("../data/mirna_exp.pkl", "rb"))
+dataset = pickle.load(open("../data/mirna_exp_all.pkl", "rb"))
 over_rate_mirna = filter_expression_by_rate(dataset, 0.5)
 # dataset = dataset[over_rate_mirna]
 
@@ -37,7 +38,22 @@ mirna_encoder.fit(training_set, validation_set, 500,
 mirna_to_encode = pickle.load(open("../data/mirna_exp_ma.pkl", "rb"))
 mirna_to_encode["beta"] = mirna_to_encode["beta"]  # [over_rate_mirna]
 mirna_dataset = mirna_encoder.encode_methylation_array(mirna_to_encode)
-pickle.dump(mirna_dataset, open("../data/mirna_embedded.pkl", "wb"))
+pickle.dump(mirna_dataset, open("../data/mirna_embedded_all.pkl", "wb"))
+
+# Just a check on ground truth
+gt_check = pd.read_csv("../data/brca_tcga_pub_clinical_data.tsv", sep="\t", na_filter=False, index_col="Patient ID")
+gt_index = list(gt_check.index.values)
+to_remove = list()
+for index, row in mirna_dataset["pheno"].iterrows():
+    if row["subtype"] != "control":
+        barcode = "-".join(index.split("-")[:3])
+        if barcode in gt_index and gt_check.loc[barcode]["PAM50 subtype"] != "Normal-like":
+            mirna_dataset["pheno"].at[index, "subtype"] = gt_check.loc[barcode]["PAM50 subtype"]
+        else:
+            to_remove.append(index)
+
+mirna_dataset["beta"] = mirna_dataset["beta"].drop(to_remove)
+mirna_dataset["pheno"] = mirna_dataset["pheno"].drop(to_remove)
 
 # Classification with ML and DL models
 params = {"input_shape": mirna_dataset["beta"].shape[1], "model_serialization_path": "../data/models/classifier/",
