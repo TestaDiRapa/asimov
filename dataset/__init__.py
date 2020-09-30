@@ -152,3 +152,30 @@ def filter_expression_by_rate(dataset, rate):
         if sum(non_zero_rows)/total_rows > rate:
             final_columns.append(column)
     return final_columns
+
+
+def merge_tsv_to_pandas(folder, indexes, value_column, file_filter, barcode=True):
+    """
+    :param folder: the folder that contains all the tsv files
+    :param indexes: a list of indexes to filter
+    :param value_column: the column containing the value to input in the dataframe
+    :param file_filter: the filter for the folder generator
+    :param barcode: boolean flag to search the barcode on GDC or use the uuid instead
+    :return: a dictionary
+    """
+    new_dataset = pd.DataFrame(columns=indexes + ["barcode"])
+    finder = BarcodeFinder()
+    for folder in folder_generator(folder, file_filter):
+        dataset = pd.read_csv(folder, sep='\t', na_values="NA", index_col=0)
+        dataset = dataset[[value_column]].dropna().loc[indexes].T.reset_index().drop("index", axis=1)
+        dataset.columns.name = None
+        print(folder)
+        print(folder.split(os.sep)[-2])
+        if barcode:
+            dataset["barcode"] = finder.find_barcode(folder.split(os.sep)[-2])
+        else:
+            dataset["barcode"] = folder.split(os.sep)[-2]
+        new_dataset = new_dataset.append(dataset)
+    finder.quit()
+    new_dataset = new_dataset.set_index("barcode")
+    return new_dataset
