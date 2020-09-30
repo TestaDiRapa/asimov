@@ -1,5 +1,5 @@
 from dataset import feature_counter
-from dataset.mirna_exp import mirna_dataset_creator
+from dataset import merge_tsv_to_pandas
 # from methylnet_utils import generate_subtype_methylation_array
 import os
 import pickle
@@ -49,7 +49,8 @@ for cpg, num_instances in mirnas.items():
         count["9-0"] += 1
 
 print(num_files, len(mirnas.keys()))
-dataset = mirna_dataset_creator(os.path.join("..", "data", "other_mirna_exp"), final_mirnas, barcode=False)
+dataset = merge_tsv_to_pandas(os.path.join("..", "data", "other_mirna_exp"), final_mirnas,
+                              "reads_per_million_miRNA_mapped", r"mirnas\.quantification\.txt$", barcode=False)
 print(dataset)
 pickle.dump(dataset, open("../data/mirna_exp_all.pkl", "wb"))
 # dataset = pickle.load(open("../data/mirna_exp.pkl", "rb"))

@@ -22,7 +22,7 @@ model = PAMClassifier
 methylation = True
 mirna = True
 mrna = True
-cnv = False
+cnv = True
 dropout = 0.3
 dataset_list = []
 
@@ -42,7 +42,6 @@ for m in pam50_mirnas:
     for gene in mirnas[m]:
         if gene[2] > 0.7:
             tmp_genes.append(gene[0])
-print(len(tmp_genes))
 
 # ENSG of PAM50 genes
 pam50_ENSG = open("../data/PAM50_ENSG.txt").read().split('\n')
@@ -59,7 +58,7 @@ if methylation:
     methylation_dataset = pickle.load(open("../data/methylation_embedded_pam.pkl", "rb"))
     dataset_list.append(methylation_dataset)
 
-# Opens mirna dataset
+# Opens miRNA dataset
 if mirna:
     mirna_dataset = pickle.load(open("../data/mirna_embedded.pkl", "rb"))
     # mirna_scaler = StandardScaler()
@@ -68,7 +67,7 @@ if mirna:
     # mirna_dataset["beta"] = mirna_dataset["beta"][pam50_mirnas]
     dataset_list.append(mirna_dataset)
 
-# Opens mirna dataset
+# Opens mRNA dataset
 if mrna:
     mrna_dataset = pickle.load(open("../data/mrna_embedded_pam.pkl", "rb"))
     # mrna_scaler = StandardScaler()
@@ -76,6 +75,11 @@ if mrna:
     #     mrna_scaler.fit_transform(mrna_dataset["beta"][mrna_dataset["beta"].columns])
     # mrna_dataset["beta"] = mrna_dataset["beta"].rename(columns=lambda g: g.split('.')[0])[pam50_ENSG]
     dataset_list.append(mrna_dataset)
+
+# Opens CNV dataset
+if cnv:
+    cnv_dataset = pickle.load(open("../data/cnv_embedded_pam.pkl", "rb"))
+    dataset_list.append(cnv_dataset)
 
 # Merges the arrays
 final_dataset = merge_methylation_arrays(*dataset_list)
@@ -94,6 +98,7 @@ for index, row in final_dataset["pheno"].iterrows():
 
 final_dataset["beta"] = final_dataset["beta"].drop(to_remove)
 final_dataset["pheno"] = final_dataset["pheno"].drop(to_remove)
+print(final_dataset)
 
 # Removes the controls
 # not_controls = final_dataset["pheno"]["subtype"] != "Control"
@@ -105,7 +110,7 @@ val_res, test_res = methylation_array_kcv(final_dataset,
                                           model,
                                           params,
                                           "subtype",
-                                          callbacks=[EarlyStopping(monitor="val_loss", min_delta=0.05, patience=20)])
+                                          callbacks=[EarlyStopping(monitor="loss", min_delta=0.05, patience=20)])
 
 print("Validation accuracy: {} - Test accuracy: {}".format(val_res, test_res))
 svm_val, svm_test = benchmark_svm(final_dataset, "subtype")
