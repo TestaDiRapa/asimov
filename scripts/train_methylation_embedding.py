@@ -9,6 +9,8 @@ import pandas as pd
 import pickle
 import os
 
+os.environ['PYTHONHASHSEED'] = '42'
+
 logfile_name = "../data/methylation_embedding.tsv"
 if not os.path.exists(logfile_name):
     with open(logfile_name, "w") as logfile:
@@ -50,12 +52,12 @@ training_set = AutoencoderGenerator(dataset["beta"].iloc[val_size:, :])
 
 # Autoencoder training
 methylation_encoder = MiRNAEncoder(dataset["beta"].shape[1], latent_dimension=ld,
-                                   model_serialization_path="../data/models/")
+                                   model_serialization_path="../trained_models",
+                                   model_name="methylation_autoencoder")
 methylation_encoder.fit(training_set, validation_set, 500,
                         callbacks=[EarlyStopping(monitor="val_loss", min_delta=0.05, patience=10)])
 
 # Creating an embedded representation of the methylation data
-
 methylation_dataset = methylation_encoder.encode_methylation_array(dataset)
 pickle.dump(methylation_dataset, open("../data/methylation_embedded_pam.pkl", "wb"))
 

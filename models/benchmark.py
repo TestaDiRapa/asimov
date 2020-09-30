@@ -19,11 +19,11 @@ def prepare_dataset(dataset, output_target):
 def benchmark_svm(dataset, output_target):
     x_train, y_train, x_test, y_test, x_val, y_val = prepare_dataset(dataset, output_target)
     param_grid = {
-        "C": [0.01, 0.1, 1, 10],
+        "C": [0.1, 1, 10, 100],
         "kernel": ["linear", "rbf"]
     }
 
-    val_acc, test_acc = 0, 0
+    val_acc, test_acc, best_params = 0, 0, None
     for params in ParameterGrid(param_grid):
         svm = SVC(**params)
         svm.fit(x_train, y_train)
@@ -31,6 +31,8 @@ def benchmark_svm(dataset, output_target):
         if val_acc_tmp > val_acc:
             val_acc = val_acc_tmp
             test_acc = svm.score(x_test, y_test)
+            best_params = params
+    print(best_params)
     return val_acc, test_acc
 
 
@@ -41,7 +43,7 @@ def benchmark_rf(dataset, output_target):
         "max_features": ["auto", "sqrt"]
     }
 
-    val_acc, test_acc = 0, 0
+    val_acc, test_acc, best_params = 0, 0, None
     for params in ParameterGrid(param_grid):
         svm = RandomForestClassifier(**params)
         svm.fit(x_train, y_train)
@@ -49,6 +51,8 @@ def benchmark_rf(dataset, output_target):
         if val_acc_tmp > val_acc:
             val_acc = val_acc_tmp
             test_acc = svm.score(x_test, y_test)
+            best_params = params
+    print(best_params)
     return val_acc, test_acc
 
 
@@ -58,7 +62,7 @@ def benchmark_knn(dataset, output_target):
         "n_neighbors": [5, 10, 50, 100]
     }
 
-    val_acc, test_acc = 0, 0
+    val_acc, test_acc, best_params = 0, 0, None
     for params in ParameterGrid(param_grid):
         svm = KNeighborsClassifier(**params)
         svm.fit(x_train, y_train)
@@ -66,4 +70,6 @@ def benchmark_knn(dataset, output_target):
         if val_acc_tmp > val_acc:
             val_acc = val_acc_tmp
             test_acc = svm.score(x_test, y_test)
+            best_params = params
+    print(best_params)
     return val_acc, test_acc

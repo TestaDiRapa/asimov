@@ -22,7 +22,7 @@ model = PAMClassifier
 methylation = True
 mirna = True
 mrna = True
-cnv = True
+cnv = False
 dropout = 0.3
 dataset_list = []
 
@@ -98,7 +98,6 @@ for index, row in final_dataset["pheno"].iterrows():
 
 final_dataset["beta"] = final_dataset["beta"].drop(to_remove)
 final_dataset["pheno"] = final_dataset["pheno"].drop(to_remove)
-print(final_dataset)
 
 # Removes the controls
 # not_controls = final_dataset["pheno"]["subtype"] != "Control"
