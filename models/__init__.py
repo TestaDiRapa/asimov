@@ -22,8 +22,8 @@ class AbstractModel(ABC):
         self.__model = None
         if not os.path.exists(model_serialization_path):
             os.makedirs(model_serialization_path)
-        self.__serialization_path = model_serialization_path
-        self.__model_name = model_name
+        self._serialization_path = model_serialization_path
+        self._model_name = model_name
 
     @abstractmethod
     def generate_model(self, input_shape, output_shape):
@@ -34,6 +34,12 @@ class AbstractModel(ABC):
         :return: None
         """
         pass
+
+    def save_model(self):
+        self.__model.save(os.path.join(self._serialization_path, self._model_name + ".h5"))
+
+    def save_weights(self):
+        self.__model.save_weights(os.path.join(self._serialization_path, self._model_name + ".h5"))
 
     def compile_model(self, input_layer, output_layer, optimizer, loss):
         """
@@ -49,7 +55,6 @@ class AbstractModel(ABC):
         self.__model.compile(optimizer=optimizer,
                              loss=loss,
                              metrics=["accuracy"])
-        self.__model.save(os.path.join(self.__serialization_path, self.__model_name + ".h5"))
         self.__model.summary()
 
     def predict(self, x_test):
@@ -90,7 +95,6 @@ class AbstractModel(ABC):
             callbacks=callbacks,
             validation_data=validation_set
         )
-        self.__model.save_weights(os.path.join(self.__serialization_path, self.__model_name + ".h5"))
 
 
 def methylation_array_kcv(dataset, model_class, model_params, output_target, k=10, verbose=0, callbacks=[]):

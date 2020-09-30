@@ -3,8 +3,9 @@ from models import AbstractModel
 from sklearn import preprocessing
 from tensorflow.keras.layers import *
 from tensorflow.keras.losses import *
-from tensorflow.keras.models import Model
+from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.optimizers import Adam
+import os
 import pandas as pd
 
 
@@ -22,6 +23,13 @@ class AbstractAutoencoder(AbstractModel):
         super().__init__(model_serialization_path, model_name)
         self.__encoder = None
         self.__decoder = None
+
+    def load_model(self):
+        """
+        Loads model and weights
+        """
+        self.__encoder = load_model(os.path.join(self._serialization_path, self._model_name + "_model.h5"), compile=True)
+        # self.__encoder.load_weights(os.path.join(self._serialization_path, self._model_name + "_weights.h5"))
 
     def generate_encoder(self, input_layer, output_layer):
         """
@@ -95,23 +103,40 @@ class AbstractAutoencoder(AbstractModel):
         new_betas = pd.DataFrame(data=embedded_betas, index=list(methylation_array["pheno"].index.values))
         return {"beta": new_betas, "pheno": methylation_array["pheno"]}
 
+    def save_model(self):
+        """
+        Saves the model in .h5 format
+        """""
+        self.__encoder.save(os.path.join(self._serialization_path, self._model_name + "_model.h5"))
+
+    def save_weights(self):
+        """
+        Saves the weights of the model in .h5 format
+        """
+        self.__encoder.save_weights(os.path.join(self._serialization_path, self._model_name + "_weights.h5"))
+
 
 class MiRNAEncoder(AbstractAutoencoder):
     """
     An autoencoder for miRNA data
     """
 
-    def __init__(self,  input_shape, latent_dimension=100, model_serialization_path="models/autoencoder/", model_name="autoencoder"):
+    def __init__(self,  input_shape=100, latent_dimension=100, model_serialization_path="models/autoencoder/",
+                 model_name="autoencoder", load=False):
         """
         Class constructor
         :param input_shape: the size of the input
         :param latent_dimension: the size of  the output
         :param model_serialization_path: the path where to save the model
         :param model_name: the model name
+        :param load: instead of creating a new model, loads it from a file
         """
         super().__init__(model_serialization_path, model_name)
         self.latent_dimension = latent_dimension
-        self.generate_model(input_shape, input_shape)
+        if load:
+            self.load_model()
+        else:
+            self.generate_model(input_shape, input_shape)
 
     def generate_model(self, input_shape, output_shape):
         """
