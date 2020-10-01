@@ -192,7 +192,8 @@ class PAMClassifier(AbstractModel):
         drop_1 = Dropout(self.dropout_rate)(relu_1)
         relu_2 = Dense(64, activation="relu")(drop_1)
         relu_3 = Dense(64, activation="relu")(relu_2)
-        drop_2 = Dropout(self.dropout_rate)(relu_3)
+        relu_4 = Dense(64, activation="relu")(relu_3)
+        drop_2 = Dropout(self.dropout_rate)(relu_4)
         output_layer = Dense(output_shape, activation="sigmoid")(drop_2)
 
         self.compile_model(input_layer, output_layer, Adam(lr=0.001), CategoricalCrossentropy())
