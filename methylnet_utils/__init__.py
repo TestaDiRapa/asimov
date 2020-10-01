@@ -78,22 +78,6 @@ def split_methylation_array_by_pheno(methylation_array_source, pheno_column, val
            {"beta": beta.loc[val_barcodes], "pheno": pheno.loc[val_barcodes]}
 
 
-def cut_index_barcode(methylation_array):
-    new_pheno = methylation_array["pheno"]
-    new_pheno["barcode"] = ""
-    new_beta = methylation_array["beta"]
-    new_beta["barcode"] = ""
-
-    for barcode in new_pheno.index.values:
-        new_barcode = "-".join(barcode.split("-")[:4])
-        new_pheno.at[barcode, "barcode"] = new_barcode
-        new_beta.at[barcode, "barcode"] = new_barcode
-
-    new_pheno = new_pheno.set_index("barcode")
-    new_beta = new_beta.set_index("barcode")
-    return {"beta": new_beta, "pheno": new_pheno}
-
-
 def merge_methylation_arrays(*args):
     """
     This functions merges several methylation arrays into a single methylation array using the common row by index. The
