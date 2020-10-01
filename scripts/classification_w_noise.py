@@ -1,6 +1,6 @@
 from methylnet_utils import merge_methylation_arrays, split_methylation_array_by_pheno
 from models.autoencoders import MiRNAEncoder
-from models.classifiers import MOLIClassifier
+from models.classifiers import MOLIClassifier, PAMClassifier
 from models.generators import AutoencoderGenerator, MethylationArrayGenerator
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
@@ -42,10 +42,10 @@ def correct_labels(methylation_array):
     return methylation_array
 
 
-def train_dnn_classifier(training_set, validation_set, test_set):
+def train_dnn_classifier(classifier, training_set, validation_set, test_set):
     params = {"input_shape": training_set["beta"].shape[1], "model_serialization_path": "../data/models/classifier/",
               "dropout_rate": 0.3, "output_shape": len(training_set["pheno"]["subtype"].unique())}
-    model = MOLIClassifier(**params)
+    model = classifier(**params)
     model.fit(MethylationArrayGenerator(training_set, "subtype"),
               MethylationArrayGenerator(validation_set, "subtype"),
               500,
@@ -116,18 +116,18 @@ methylation_embedded = methylation_encoder.encode_methylation_array(methylation_
 # Training the mRNA autoencoder
 mrna_dataset = pickle.load(open("../data/mrna_exp_ma.pkl", "rb"))
 mrna_dataset["beta"] = mrna_dataset["beta"].rename(columns=lambda g: g.split('.')[0])
-mrna_dataset["beta"] = mrna_dataset["beta"][pam50_mrnas]
+# mrna_dataset["beta"] = mrna_dataset["beta"][pam50_mrnas]
 mrna_encoder = train_autoencoder(mrna_dataset, mrna_latent_dimension)
 mrna_dataset = correct_labels(mrna_dataset)
 mrna_embedded = mrna_encoder.encode_methylation_array(mrna_dataset)
 # Training the miRNA autoencoder
 mirna_dataset = pickle.load(open("../data/mirna_exp_ma.pkl", "rb"))
-# mirna_dataset["beta"] = mirna_dataset["beta"][pam50_mirnas]
+mirna_dataset["beta"] = mirna_dataset["beta"][pam50_mirnas]
 mirna_encoder = train_autoencoder(mirna_dataset, mirna_latent_dimension)
 mirna_dataset = correct_labels(mirna_dataset)
 mirna_embedded = mirna_encoder.encode_methylation_array(mirna_dataset)
 # Combined dataset
-# combined_dataset = merge_methylation_arrays(methylation_dataset, mrna_dataset, mirna_dataset)
+combined_dataset = merge_methylation_arrays(methylation_dataset, mrna_dataset, mirna_dataset)
 combined_embedded = merge_methylation_arrays(methylation_embedded, mrna_embedded, mirna_embedded)
 
 # PART 3
@@ -135,25 +135,29 @@ combined_embedded = merge_methylation_arrays(methylation_embedded, mrna_embedded
 stats = {
     "base": {
         "methylation": {
-            "dnn": [],
+            "pam": [],
+            "moli": [],
             "svm": [],
             "knn": [],
             "rf": []
         },
         "mrna": {
-            "dnn": [],
+            "pam": [],
+            "moli": [],
             "svm": [],
             "knn": [],
             "rf": []
         },
         "mirna": {
-            "dnn": [],
+            "pam": [],
+            "moli": [],
             "svm": [],
             "knn": [],
             "rf": []
         },
         "combined": {
-            "dnn": [],
+            "pam": [],
+            "moli": [],
             "svm": [],
             "knn": [],
             "rf": []
@@ -167,8 +171,8 @@ for i in range(10):
     methylation_train, methylation_val, methylation_test = \
         split_methylation_array_by_pheno(methylation_embedded, "subtype", val_rate=0.1, test_rate=0.1)
     methylation_barcodes = list(methylation_test["pheno"].index.values)
-    # DNN
-    dnn_methylation, dnn_acc = train_dnn_classifier(methylation_train, methylation_val, methylation_test)
+    # DNN - PAM
+    pam_methylation, dnn_acc = train_dnn_classifier(PAMClassifier,methylation_train, methylation_val, methylation_test)
     stats["base"]["methylation"]["dnn"].append(dnn_acc)
     # SVM
     svm_methylation, svm_acc = train_ml_classifier(methylation_train, methylation_test, SVC, {"C": 1, "kernel": "rbf"},

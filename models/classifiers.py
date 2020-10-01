@@ -189,9 +189,9 @@ class PAMClassifier(AbstractModel):
         """
         input_layer = Input(shape=input_shape)
         relu_1 = Dense(64, activation="relu")(input_layer)
-        drop_1 = Dropout(self.dropout_rate)(relu_1)
-        relu_2 = Dense(64, activation="relu")(drop_1)
-        relu_3 = Dense(64, activation="relu")(relu_2)
+        relu_2 = Dense(64, activation="relu")(relu_1)
+        drop_1 = Dropout(self.dropout_rate)(relu_2)
+        relu_3 = Dense(64, activation="relu")(drop_1)
         relu_4 = Dense(64, activation="relu")(relu_3)
         drop_2 = Dropout(self.dropout_rate)(relu_4)
         output_layer = Dense(output_shape, activation="sigmoid")(drop_2)
