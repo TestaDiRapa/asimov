@@ -20,7 +20,7 @@ class MethylationArrayGenerator(Sequence):
         if type(df_source) == str:
             self.df = pickle.load(open(df_source, "rb"))
         else:
-            self.df = df_source
+            self.df = {"beta": df_source["beta"], "pheno": df_source["pheno"]}
         self.df["pheno"] = pd.get_dummies(self.df["pheno"][label_column])
         self.batch_size = batch_size
         self.barcodes = list(self.df["pheno"].index.values)

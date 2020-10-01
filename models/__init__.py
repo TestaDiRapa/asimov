@@ -55,7 +55,7 @@ class AbstractModel(ABC):
         self.__model.compile(optimizer=optimizer,
                              loss=loss,
                              metrics=["accuracy"])
-        self.__model.summary()
+        # self.__model.summary()
 
     def predict(self, x_test):
         """
@@ -121,5 +121,5 @@ def methylation_array_kcv(dataset, model_class, model_params, output_target, k=1
         test_accuracies.append(model.evaluate(test_set["beta"].to_numpy(),
                                pd.get_dummies(test_set["pheno"][output_target]).to_numpy()))
         val_accuracies.append(model.evaluate(validation_set["beta"].to_numpy(),
-                                             validation_set["pheno"].to_numpy()))
+                                             pd.get_dummies(validation_set["pheno"].to_numpy())))
     return sum(val_accuracies)/len(val_accuracies), sum(test_accuracies)/len(test_accuracies)

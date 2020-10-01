@@ -104,7 +104,11 @@ def merge_methylation_arrays(*args):
     barcodes_all = []
     reindexed_arrays = []
     for methylation_array in args:
-        reindexed_ma = cut_index_barcode(methylation_array)
+        # reindexed_ma = cut_index_barcode(methylation_array)
+        reindexed_ma = {
+            "pheno": methylation_array["pheno"].rename(index=lambda barcode: "-".join(barcode.split("-")[:4])),
+            "beta": methylation_array["beta"].rename(index=lambda barcode: "-".join(barcode.split("-")[:4]))
+        }
         barcodes_all.append(set(reindexed_ma["pheno"].index.drop_duplicates(keep=False).values))
         reindexed_arrays.append(reindexed_ma)
 
