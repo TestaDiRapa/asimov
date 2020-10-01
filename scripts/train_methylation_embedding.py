@@ -59,7 +59,7 @@ methylation_encoder.fit(training_set, validation_set, 500,
 
 # Creating an embedded representation of the methylation data
 methylation_dataset = methylation_encoder.encode_methylation_array(dataset)
-pickle.dump(methylation_dataset, open("../data/methylation_embedded_pam.pkl", "wb"))
+# pickle.dump(methylation_dataset, open("../data/methylation_embedded_pam.pkl", "wb"))
 
 # Just a check on ground truth
 gt_check = pd.read_csv("../data/brca_tcga_pub_clinical_data.tsv", sep="\t", na_filter=False, index_col="Patient ID")
