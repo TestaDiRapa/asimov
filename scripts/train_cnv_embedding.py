@@ -1,5 +1,5 @@
 from models import methylation_array_kcv
-from models.autoencoders import MiRNAEncoder
+from models.autoencoders import Giskard
 from models.benchmark import benchmark_svm, benchmark_rf, benchmark_knn
 from models.classifiers import MOLIClassifier
 from models.generators import AutoencoderGenerator
@@ -49,7 +49,7 @@ validation_set = AutoencoderGenerator(dataset.iloc[:val_size, :])
 training_set = AutoencoderGenerator(dataset.iloc[val_size:, :])
 
 # Autoencoder training
-cnv_encoder = MiRNAEncoder(dataset.shape[1], latent_dimension=ld, model_serialization_path="../data/models/")
+cnv_encoder = Giskard(dataset.shape[1], latent_dimension=ld, model_serialization_path="../data/models/")
 cnv_encoder.fit(training_set, validation_set, 2000,
                 callbacks=[EarlyStopping(monitor="val_loss", min_delta=0.05, patience=10)])
 

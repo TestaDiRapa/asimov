@@ -1,5 +1,5 @@
 from methylnet_utils import merge_methylation_arrays, split_methylation_array_by_pheno
-from models.autoencoders import MiRNAEncoder
+from models.autoencoders import Giskard
 from models.classifiers import MOLIClassifier, PAMClassifier
 from models.generators import AutoencoderGenerator, MethylationArrayGenerator
 from sklearn.ensemble import RandomForestClassifier
@@ -19,8 +19,8 @@ def train_autoencoder(methylation_array, latent_dimension):
     train_set = AutoencoderGenerator(methylation_array["beta"].iloc[val_size:, :])
 
     # Autoencoder training
-    encoder = MiRNAEncoder(methylation_array["beta"].shape[1], latent_dimension=latent_dimension,
-                           model_serialization_path="../data/models/")
+    encoder = Giskard(methylation_array["beta"].shape[1], latent_dimension=latent_dimension,
+                      model_serialization_path="../data/models/")
     encoder.fit(train_set, val_set, 500,
                 callbacks=[EarlyStopping(monitor="val_loss", min_delta=0.05, patience=10)])
     return encoder

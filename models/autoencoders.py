@@ -116,7 +116,7 @@ class AbstractAutoencoder(AbstractModel):
         self.__encoder.save_weights(os.path.join(self._serialization_path, self._model_name + "_weights.h5"))
 
 
-class MiRNAEncoder(AbstractAutoencoder):
+class Giskard(AbstractAutoencoder):
     """
     An autoencoder for miRNA data
     """
