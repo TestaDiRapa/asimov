@@ -161,7 +161,7 @@ class Daneel(AbstractModel):
         return "MOLIClassifier"
 
 
-class PAMClassifier(AbstractModel):
+class Jander(AbstractModel):
     """
     Implements the abstract model as a fully connected NN with 3 hidden layers
     """

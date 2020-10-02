@@ -1,6 +1,6 @@
 from methylnet_utils import merge_methylation_arrays, split_methylation_array_by_pheno
 from models.autoencoders import Giskard
-from models.classifiers import Daneel, PAMClassifier
+from models.classifiers import Daneel, Jander
 from models.generators import AutoencoderGenerator, MethylationArrayGenerator
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
@@ -243,7 +243,7 @@ for i in range(10):
         models[omic] = dict()
 
         # DNN - PAM
-        models[omic]["pam"], acc = train_dnn_classifier(PAMClassifier, training_set, validation_set, test_set)
+        models[omic]["pam"], acc = train_dnn_classifier(Jander, training_set, validation_set, test_set)
         stats["base"][omic]["pam"].append(acc)
 
         # DNN - MOLI

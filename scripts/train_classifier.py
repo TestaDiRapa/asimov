@@ -1,7 +1,7 @@
 from methylnet_utils import merge_methylation_arrays
 from models import methylation_array_kcv
 from models.benchmark import benchmark_svm, benchmark_rf, benchmark_knn
-from models.classifiers import NeuralClassifier, ConvolutionalClassifier, Daneel, PAMClassifier
+from models.classifiers import NeuralClassifier, ConvolutionalClassifier, Daneel, Jander
 from tensorflow.keras.callbacks import EarlyStopping
 import os
 import pandas as pd
@@ -15,7 +15,7 @@ if not os.path.exists(logfile_name):
         logfile.write('\t'.join(fields))
 
 # Alias for the model
-model = PAMClassifier
+model = Jander
 
 # Logging parameters
 methylation = True
