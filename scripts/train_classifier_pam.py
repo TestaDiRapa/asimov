@@ -1,7 +1,7 @@
 from methylnet_utils import merge_methylation_arrays
 from models import methylation_array_kcv
 from models.benchmark import benchmark_svm, benchmark_rf, benchmark_knn
-from models.classifiers import NeuralClassifier, ConvolutionalClassifier, MOLIClassifier, PAMClassifier
+from models.classifiers import NeuralClassifier, ConvolutionalClassifier, Daneel, PAMClassifier
 from sklearn.preprocessing import StandardScaler
 from tensorflow.keras.callbacks import EarlyStopping
 import os

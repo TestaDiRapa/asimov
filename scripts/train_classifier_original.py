@@ -1,7 +1,7 @@
 from dataset.mirna_exp import get_interactions_over_threshold
 from methylnet_utils import merge_methylation_arrays
 from models import methylation_array_kcv
-from models.classifiers import NeuralClassifier, ConvolutionalClassifier, MOLIClassifier
+from models.classifiers import NeuralClassifier, ConvolutionalClassifier, Daneel
 from tensorflow.keras.callbacks import EarlyStopping
 import os
 import pickle

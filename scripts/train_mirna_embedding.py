@@ -2,7 +2,7 @@ from dataset import filter_expression_by_rate
 from models import methylation_array_kcv
 from models.autoencoders import Giskard
 from models.benchmark import benchmark_svm, benchmark_rf, benchmark_knn
-from models.classifiers import NeuralClassifier, ConvolutionalClassifier, MOLIClassifier
+from models.classifiers import NeuralClassifier, ConvolutionalClassifier, Daneel
 from models.generators import AutoencoderGenerator
 from tensorflow.keras.callbacks import EarlyStopping
 import pandas as pd
@@ -59,7 +59,7 @@ mirna_dataset["pheno"] = mirna_dataset["pheno"].drop(to_remove)
 params = {"input_shape": mirna_dataset["beta"].shape[1], "model_serialization_path": "../data/models/classifier/",
           "dropout_rate": 0.05, "output_shape": len(mirna_dataset["pheno"]["subtype"].unique())}
 val_res, test_res = methylation_array_kcv(mirna_dataset,
-                                          MOLIClassifier,
+                                          Daneel,
                                           params,
                                           "subtype",
                                           callbacks=[EarlyStopping(monitor="val_loss", min_delta=0.05, patience=10)])

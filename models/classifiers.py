@@ -119,7 +119,7 @@ class ConvolutionalClassifier(AbstractModel):
         return "ConvolutionalClassifier"
 
 
-class MOLIClassifier(AbstractModel):
+class Daneel(AbstractModel):
     """
     Implements the abstract model as a fully connected NN with 3 hidden layers
     """

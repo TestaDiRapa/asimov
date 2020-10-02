@@ -1,7 +1,7 @@
 from models import methylation_array_kcv
 from models.autoencoders import Giskard
 from models.benchmark import benchmark_svm, benchmark_rf, benchmark_knn
-from models.classifiers import MOLIClassifier
+from models.classifiers import Daneel
 from models.generators import AutoencoderGenerator
 from tensorflow.keras.callbacks import EarlyStopping
 import os
@@ -78,7 +78,7 @@ cnv_dataset["pheno"] = cnv_dataset["pheno"].drop(to_remove)
 params = {"input_shape": cnv_dataset["beta"].shape[1], "model_serialization_path": "../data/models/classifier/",
           "dropout_rate": 0.3, "output_shape": len(cnv_dataset["pheno"]["subtype"].unique())}
 val_res, test_res = methylation_array_kcv(cnv_dataset,
-                                          MOLIClassifier,
+                                          Daneel,
                                           params,
                                           "subtype",
                                           callbacks=[EarlyStopping(monitor="val_loss", min_delta=0.05, patience=10)])
