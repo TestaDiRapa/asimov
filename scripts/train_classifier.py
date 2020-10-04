@@ -1,11 +1,28 @@
 from methylnet_utils import merge_methylation_arrays
 from models import methylation_array_kcv
 from models.benchmark import benchmark_svm, benchmark_rf, benchmark_knn
-from models.classifiers import NeuralClassifier, ConvolutionalClassifier, Daneel, Jander
+from models.classifiers import NeuralClassifier, ConvolutionalClassifier, Daneel, Jander, SmallClassifier, \
+    SmallConvolutionalClassifier, MediumClassifier
+from models.generators import MethylationArrayGenerator
 from tensorflow.keras.callbacks import EarlyStopping
 import os
 import pandas as pd
 import pickle
+
+
+def train_dnn_classifier(classifier, train_set, val_set, test_data):
+    params = {"input_shape": train_set["beta"].shape[1], "model_serialization_path": "../data/models/classifier/",
+              "dropout_rate": 0.3, "output_shape": len(train_set["pheno"]["subtype"].unique())}
+    model = classifier(**params)
+    model.fit(MethylationArrayGenerator(train_set, "subtype"),
+              MethylationArrayGenerator(val_set, "subtype"),
+              500,
+              verbose=0,
+              callbacks=[EarlyStopping(monitor="val_loss", min_delta=0.05, patience=20)])
+    test_accuracy = model.evaluate(test_data["beta"].to_numpy(),
+                                   pd.get_dummies(test_data["pheno"]["subtype"]).to_numpy())
+    return model, test_accuracy
+
 
 logfile_name = "../data/classifiers_stats.tsv"
 if not os.path.exists(logfile_name):

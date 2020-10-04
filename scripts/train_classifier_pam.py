@@ -1,12 +1,30 @@
-from methylnet_utils import merge_methylation_arrays
+from methylnet_utils import merge_methylation_arrays, split_methylation_array_by_pheno
 from models import methylation_array_kcv
 from models.benchmark import benchmark_svm, benchmark_rf, benchmark_knn
-from models.classifiers import NeuralClassifier, ConvolutionalClassifier, Daneel, Jander
+from models.classifiers import NeuralClassifier, ConvolutionalClassifier, Daneel, Jander, SmallClassifier, \
+    SmallConvolutionalClassifier, MediumClassifier
+from models.generators import MethylationArrayGenerator
 from sklearn.preprocessing import StandardScaler
 from tensorflow.keras.callbacks import EarlyStopping
+import numpy as np
 import os
 import pandas as pd
 import pickle
+
+
+def train_dnn_classifier(classifier, train_set, val_set, test_data):
+    params = {"input_shape": train_set["beta"].shape[1], "model_serialization_path": "../data/models/classifier/",
+              "dropout_rate": 0.3, "output_shape": len(train_set["pheno"]["subtype"].unique())}
+    model = classifier(**params)
+    model.fit(MethylationArrayGenerator(train_set, "subtype"),
+              MethylationArrayGenerator(val_set, "subtype"),
+              500,
+              verbose=0,
+              callbacks=[EarlyStopping(monitor="val_loss", min_delta=0.05, patience=20)])
+    test_accuracy = model.evaluate(test_data["beta"].to_numpy(),
+                                   pd.get_dummies(test_data["pheno"]["subtype"]).to_numpy())
+    return model, test_accuracy
+
 
 logfile_name = "../data/classifiers_pam_stats.tsv"
 if not os.path.exists(logfile_name):
@@ -102,7 +120,7 @@ final_dataset["pheno"] = final_dataset["pheno"].drop(to_remove)
 # Removes the controls
 # not_controls = final_dataset["pheno"]["subtype"] != "Control"
 # final_dataset = {"beta": final_dataset["beta"][not_controls], "pheno": final_dataset["pheno"][not_controls]}
-
+"""
 params = {"input_shape": final_dataset["beta"].shape[1], "model_serialization_path": "../data/models/classifier/",
           "dropout_rate": dropout, "output_shape": len(final_dataset["pheno"]["subtype"].unique())}
 val_res, test_res = methylation_array_kcv(final_dataset,
@@ -125,3 +143,25 @@ with open(logfile_name, 'a') as logfile:
     logfile.write(base.format("SVM", methylation, mirna, mrna, cnv, dropout, svm_val, svm_test))
     logfile.write(base.format("KNN", methylation, mirna, mrna, cnv, dropout, knn_val, knn_test))
     logfile.write(base.format("RF", methylation, mirna, mrna, cnv, dropout, rf_val, rf_test))
+"""
+# NeuralClassifier, ConvolutionalClassifier,Daneel, Jander,SmallClassifier,SmallConvolutionalClassifier,MediumClassifier
+stats = {
+    NeuralClassifier: [],
+    ConvolutionalClassifier: [],
+    Daneel: [],
+    Jander: [],
+    SmallClassifier: [],
+    SmallConvolutionalClassifier: [],
+    MediumClassifier: []
+}
+for i in range(10):
+    training_set, validation_set, test_set = \
+        split_methylation_array_by_pheno(final_dataset, "subtype", val_rate=0.1, test_rate=0.1)
+
+    for model in stats.keys():
+        _, acc = train_dnn_classifier(model, training_set, validation_set, test_set)
+        stats[model].append(acc)
+
+
+for omic, accuracies in stats.items():
+    print(omic, np.mean(accuracies))

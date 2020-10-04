@@ -175,7 +175,122 @@ class Giskard(AbstractAutoencoder):
         return "MiRNAEncoder"
 
 
-class MRNAEncoder(AbstractAutoencoder):
+class ShallowConvolutionalAE(AbstractAutoencoder):
+    """
+    An autoencoder for mRNA data
+    """
+
+    def __init__(self, input_shape, latent_dimension=100, model_serialization_path="models/autoencoder/",
+                 model_name="autoencoder"):
+        """
+        Class constructor
+        :param input_shape: the size of the input
+        :param latent_dimension: the size of  the output
+        :param model_serialization_path: the path where to save the model
+        :param model_name: the model name
+        """
+        super().__init__(model_serialization_path, model_name)
+        self.latent_dimension = latent_dimension
+        self.generate_model(input_shape, input_shape)
+
+    def generate_model(self, input_shape, output_shape):
+        """
+        Instantiates encoder, decoder and model as NN with 3 hidden layers
+        :param input_shape: the input shape
+        :param output_shape: the output shape
+        :return: None
+        """
+        hidden_neurons_1 = input_shape//4
+        hidden_neurons_2 = 3000
+        hidden_neurons_4 = 5000
+        hidden_neurons_6 = 500
+        hidden_neurons_7 = 300
+
+        encoder_input_layer = Input(shape=input_shape)
+        encoder_layer_1 = Dense(hidden_neurons_1, activation="relu")(encoder_input_layer)
+        reshaped_layer = Reshape((hidden_neurons_1, 1))(encoder_layer_1)
+        encoder_layer_2 = Conv1D(256, 4, activation="relu")(reshaped_layer)
+        encoder_layer_11 = Conv1D(1, 4, activation="relu")(encoder_layer_2)
+        flattened = Flatten()(encoder_layer_11)
+        encoder_output = Dense(self.latent_dimension, activation="sigmoid")(flattened)
+        self.generate_encoder(encoder_input_layer, encoder_output)
+
+        decoder_input_layer = Input(shape=self.latent_dimension)
+        decoder_layer_1 = Dense(hidden_neurons_7, activation="relu")(decoder_input_layer)
+        decoder_layer_2 = Dense(hidden_neurons_6, activation="relu")(decoder_layer_1)
+        decoder_layer_4 = Dense(hidden_neurons_4, activation="relu")(decoder_layer_2)
+        decoder_layer_6 = Dense(hidden_neurons_2, activation="relu")(decoder_layer_4)
+        decoder_output = Dense(output_shape, activation="sigmoid")(decoder_layer_6)
+        self.generate_decoder(decoder_input_layer, decoder_output)
+
+        model_input = Input(shape=input_shape)
+        code = self.encoder_layer(model_input)
+        model_output = self.decoder_layer(code)
+        self.compile_model(model_input, model_output, Adam(lr=0.001), CosineSimilarity())
+
+
+class DeepFullyConnectedAE(AbstractAutoencoder):
+    """
+    An autoencoder for mRNA data
+    """
+
+    def __init__(self, input_shape, latent_dimension=100, model_serialization_path="models/autoencoder/",
+                 model_name="autoencoder"):
+        """
+        Class constructor
+        :param input_shape: the size of the input
+        :param latent_dimension: the size of  the output
+        :param model_serialization_path: the path where to save the model
+        :param model_name: the model name
+        """
+        super().__init__(model_serialization_path, model_name)
+        self.latent_dimension = latent_dimension
+        self.generate_model(input_shape, input_shape)
+
+    def generate_model(self, input_shape, output_shape):
+        """
+        Instantiates encoder, decoder and model as NN with 3 hidden layers
+        :param input_shape: the input shape
+        :param output_shape: the output shape
+        :return: None
+        """
+        hidden_neurons_1 = input_shape//4
+        hidden_neurons_2 = 3000
+        hidden_neurons_3 = 2000
+        hidden_neurons_4 = 5000
+        hidden_neurons_5 = 1000
+        hidden_neurons_6 = 500
+        hidden_neurons_7 = 300
+
+        encoder_input_layer = Input(shape=input_shape)
+        encoder_layer_1 = Dense(hidden_neurons_1, activation="relu")(encoder_input_layer)
+        encoder_layer_2 = Dense(hidden_neurons_2, activation="relu")(encoder_layer_1)
+        encoder_layer_3 = Dense(hidden_neurons_3, activation="relu")(encoder_layer_2)
+        encoder_layer_4 = Dense(hidden_neurons_4, activation="relu")(encoder_layer_3)
+        encoder_layer_5 = Dense(hidden_neurons_5, activation="relu")(encoder_layer_4)
+        encoder_layer_6 = Dense(hidden_neurons_6, activation="relu")(encoder_layer_5)
+        encoder_layer_7 = Dense(hidden_neurons_7, activation="relu")(encoder_layer_6)
+        encoder_output = Dense(self.latent_dimension, activation="sigmoid")(encoder_layer_7)
+        self.generate_encoder(encoder_input_layer, encoder_output)
+
+        decoder_input_layer = Input(shape=self.latent_dimension)
+        decoder_layer_1 = Dense(hidden_neurons_7, activation="relu")(decoder_input_layer)
+        decoder_layer_2 = Dense(hidden_neurons_6, activation="relu")(decoder_layer_1)
+        decoder_layer_3 = Dense(hidden_neurons_5, activation="relu")(decoder_layer_2)
+        decoder_layer_4 = Dense(hidden_neurons_4, activation="relu")(decoder_layer_3)
+        decoder_layer_5 = Dense(hidden_neurons_3, activation="relu")(decoder_layer_4)
+        decoder_layer_6 = Dense(hidden_neurons_2, activation="relu")(decoder_layer_5)
+        decoder_layer_7 = Dense(hidden_neurons_1, activation="relu")(decoder_layer_6)
+        decoder_output = Dense(output_shape, activation="sigmoid")(decoder_layer_7)
+        self.generate_decoder(decoder_input_layer, decoder_output)
+
+        model_input = Input(shape=input_shape)
+        code = self.encoder_layer(model_input)
+        model_output = self.decoder_layer(code)
+        self.compile_model(model_input, model_output, Adam(lr=0.001), CosineSimilarity())
+
+
+class DeepConvolutionalAE(AbstractAutoencoder):
     """
     An autoencoder for mRNA data
     """
@@ -212,15 +327,15 @@ class MRNAEncoder(AbstractAutoencoder):
         encoder_layer_1 = Dense(hidden_neurons_1, activation="relu")(encoder_input_layer)
         reshaped_layer = Reshape((hidden_neurons_1, 1))(encoder_layer_1)
         encoder_layer_2 = Conv1D(256, 4, activation="relu")(reshaped_layer)
-        # encoder_layer_3 = Conv1D(256, 2, activation="relu")(encoder_layer_2)
-        # encoder_layer_4 = Conv1D(128, 2, activation="relu")(encoder_layer_3)
-        # encoder_layer_5 = Conv1D(64, 2, activation="relu")(encoder_layer_4)
-        # encoder_layer_6 = Conv1D(16, 2, activation="relu")(encoder_layer_5)
-        # encoder_layer_7 = Conv1D(8, 2, activation="relu")(encoder_layer_6)
-        # encoder_layer_8 = Conv1D(4, 2, activation="relu")(encoder_layer_7)
-        # encoder_layer_9 = Conv1D(4, 2, activation="relu")(encoder_layer_8)
-        # encoder_layer_10 = Conv1D(2, 2, activation="relu")(encoder_layer_9)
-        encoder_layer_11 = Conv1D(1, 4, activation="relu")(encoder_layer_2)
+        encoder_layer_3 = Conv1D(256, 2, activation="relu")(encoder_layer_2)
+        encoder_layer_4 = Conv1D(128, 2, activation="relu")(encoder_layer_3)
+        encoder_layer_5 = Conv1D(64, 2, activation="relu")(encoder_layer_4)
+        encoder_layer_6 = Conv1D(16, 2, activation="relu")(encoder_layer_5)
+        encoder_layer_7 = Conv1D(8, 2, activation="relu")(encoder_layer_6)
+        encoder_layer_8 = Conv1D(4, 2, activation="relu")(encoder_layer_7)
+        encoder_layer_9 = Conv1D(4, 2, activation="relu")(encoder_layer_8)
+        encoder_layer_10 = Conv1D(2, 2, activation="relu")(encoder_layer_9)
+        encoder_layer_11 = Conv1D(1, 4, activation="relu")(encoder_layer_10)
         flattened = Flatten()(encoder_layer_11)
         encoder_output = Dense(self.latent_dimension, activation="sigmoid")(flattened)
         self.generate_encoder(encoder_input_layer, encoder_output)
