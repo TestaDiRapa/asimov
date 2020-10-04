@@ -31,13 +31,15 @@ def correct_labels(methylation_array):
     gt_check = pd.read_csv("../data/brca_tcga_pub_clinical_data.tsv", sep="\t", na_filter=False, index_col="Patient ID")
     gt_index = list(gt_check.index.values)
     to_remove = list()
+    count_na = 0
     for pheno_index, row in methylation_array["pheno"].iterrows():
         if row["subtype"] != "control":
             barcode = "-".join(pheno_index.split("-")[:3])
             if barcode in gt_index and gt_check.loc[barcode]["PAM50 subtype"] != "Normal-like":
                 if gt_check.loc[barcode]["PAM50 subtype"] != "NA":
                     methylation_array["pheno"].at[pheno_index, "subtype"] = gt_check.loc[barcode]["PAM50 subtype"]
-                elif gt_check.loc[barcode]["PAM50 subtype"] == "NA" and row["subtype"] == "unclear":
+                elif gt_check.loc[barcode]["PAM50 subtype"] == "NA" and count_na < 150:
+                    count_na += 1
                     methylation_array["pheno"].at[pheno_index, "subtype"] = "NA"
                 else:
                     to_remove.append(pheno_index)

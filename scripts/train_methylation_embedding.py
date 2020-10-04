@@ -1,15 +1,42 @@
 from dataset.mirna_exp import get_interactions_over_threshold
+from methylnet_utils import split_methylation_array_by_pheno
 from models import methylation_array_kcv
-from models.autoencoders import Giskard
+from models.autoencoders import Giskard, ShallowConvolutionalAE, DeepFullyConnectedAE, DeepConvolutionalAE
 from models.benchmark import benchmark_svm, benchmark_rf, benchmark_knn
-from models.classifiers import NeuralClassifier, ConvolutionalClassifier, Daneel
-from models.generators import AutoencoderGenerator
+from models.classifiers import Jander
+from models.generators import AutoencoderGenerator, MethylationArrayGenerator
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
 from tensorflow.keras.callbacks import EarlyStopping
 import pandas as pd
 import pickle
+import numpy as np
 import os
 
-os.environ['PYTHONHASHSEED'] = '42'
+
+def train_dnn_classifier(classifier, train_set, val_set, test_data):
+    params = {"input_shape": train_set["beta"].shape[1], "model_serialization_path": "../data/models/classifier/",
+              "dropout_rate": 0.3, "output_shape": len(train_set["pheno"]["subtype"].unique())}
+    model = classifier(**params)
+    model.fit(MethylationArrayGenerator(train_set, "subtype"),
+              MethylationArrayGenerator(val_set, "subtype"),
+              500,
+              verbose=0,
+              callbacks=[EarlyStopping(monitor="val_loss", min_delta=0.05, patience=20)])
+    test_accuracy = model.evaluate(test_data["beta"].to_numpy(),
+                                   pd.get_dummies(test_data["pheno"]["subtype"]).to_numpy())
+    return model, test_accuracy
+
+
+def train_ml_classifier(train_set, test_data, model, params, val_set=None):
+    if val_set is not None:
+        train_set["beta"] = train_set["beta"].append(val_set["beta"])
+        train_set["pheno"] = train_set["pheno"].append(val_set["pheno"])
+    classifier = model(**params)
+    classifier.fit(train_set["beta"], train_set["pheno"].values.ravel())
+    return classifier, classifier.score(test_data["beta"], test_data["pheno"].values.ravel())
+
 
 logfile_name = "../data/methylation_embedding.tsv"
 if not os.path.exists(logfile_name):
@@ -51,7 +78,7 @@ validation_set = AutoencoderGenerator(dataset["beta"].iloc[:val_size, :])
 training_set = AutoencoderGenerator(dataset["beta"].iloc[val_size:, :])
 
 # Autoencoder training
-methylation_encoder = Giskard(dataset["beta"].shape[1], latent_dimension=ld,
+methylation_encoder = DeepConvolutionalAE(dataset["beta"].shape[1], latent_dimension=ld,
                               model_serialization_path="../trained_models",
                               model_name="methylation_autoencoder")
 methylation_encoder.fit(training_set, validation_set, 500,
@@ -76,6 +103,7 @@ for index, row in methylation_dataset["pheno"].iterrows():
 methylation_dataset["beta"] = methylation_dataset["beta"].drop(to_remove)
 methylation_dataset["pheno"] = methylation_dataset["pheno"].drop(to_remove)
 
+"""
 # Classification with ML and DL models
 params = {"input_shape": methylation_dataset["beta"].shape[1], "model_serialization_path": "../data/models/classifier/",
           "dropout_rate": 0.2, "output_shape": len(methylation_dataset["pheno"]["subtype"].unique())}
@@ -93,9 +121,42 @@ print("KNN validation accuracy: {} - KNN test accuracy: {}".format(knn_val, knn_
 rf_val, rf_test = benchmark_rf(methylation_dataset, "subtype")
 print("RF validation accuracy: {} - RF test accuracy: {}".format(rf_val, rf_test))
 
+
 with open(logfile_name, 'a') as logfile:
     base = "{}\t{}\t{}\t{}\t{}\n"
     logfile.write(base.format(str(methylation_encoder), "MLP", ld, val_res, test_res))
     logfile.write(base.format(str(methylation_encoder), "SVM", ld, svm_val, svm_test))
     logfile.write(base.format(str(methylation_encoder), "KNN", ld, knn_val, knn_test))
     logfile.write(base.format(str(methylation_encoder), "RF", ld, rf_val, rf_test))
+"""
+stats = {
+    "daneel": [],
+    "svm": [],
+    "knn": [],
+    "rf": [],
+}
+for i in range(10):
+    training_set, validation_set, test_set = \
+        split_methylation_array_by_pheno(methylation_dataset, "subtype", val_rate=0.1, test_rate=0.1)
+
+    # DNN - Daneel
+    model, acc = train_dnn_classifier(Jander, training_set, validation_set, test_set)
+    stats["daneel"].append(acc)
+
+    # SVM
+    model, acc = train_ml_classifier(training_set, test_set, SVC, {"C": 1, "kernel": "rbf"},
+                                     validation_set)
+    stats["svm"].append(acc)
+
+    # KNN
+    model, acc = train_ml_classifier(training_set, test_set, KNeighborsClassifier,
+                                     {"n_neighbors": 75}, validation_set)
+    stats["knn"].append(acc)
+
+    # RF
+    model, acc = train_ml_classifier(training_set, test_set, RandomForestClassifier,
+                                     {"n_estimators": 2000, "max_features": "auto"}, validation_set)
+    stats["rf"].append(acc)
+
+for omic, accuracies in stats.items():
+    print(omic, np.mean(accuracies))
