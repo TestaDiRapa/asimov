@@ -73,15 +73,15 @@ def slice_methylation_array_to_merge(methylation_array, b):
     }
 
 
-def plot_single_omic_change(scores, ml_method, omic_type, single=True):
+def plot_single_omic_change(acc_scores, ml_method, omic_type, single=True):
     x, y = [], []
     x.append(0)
-    y.append(np.mean(scores["base"][omic_type][ml_method]))
+    y.append(np.mean(acc_scores["base"][omic_type][ml_method]))
     if single:
         scope = "single"
     else:
         scope = "combined"
-    for std, a in scores[scope][omic_type][ml_method].items():
+    for std, a in acc_scores[scope][omic_type][ml_method].items():
         x.append(std)
         y.append(a)
 
@@ -93,18 +93,18 @@ def plot_single_omic_change(scores, ml_method, omic_type, single=True):
     plt.savefig("../data/results/{}_{}_{}.png".format(ml_method, omic_type, scope))
 
 
-def plot_against_combined(scores, ml_method, omic_type):
+def plot_against_combined(acc_scores, ml_method, omic_type):
     x_single, y_single = [], []
     x_combined, y_combined = [], []
     x_single.append(0)
-    y_single.append(np.mean(scores["base"][omic_type][ml_method]))
-    for std, a in scores["single"][omic_type][ml_method].items():
+    y_single.append(np.mean(acc_scores["base"][omic_type][ml_method]))
+    for std, a in acc_scores["single"][omic_type][ml_method].items():
         x_single.append(std)
         y_single.append(a)
 
     x_combined.append(0)
-    y_combined.append(np.mean(scores["base"]["combined"][ml_method]))
-    for std, a in scores["combined"][omic_type][ml_method].items():
+    y_combined.append(np.mean(acc_scores["base"]["combined"][ml_method]))
+    for std, a in acc_scores["combined"][omic_type][ml_method].items():
         x_combined.append(std)
         y_combined.append(a)
 
@@ -204,29 +204,29 @@ encoders = {
 stats = {
     "base": {
         "methylation": {
-            "pam": [],
-            "moli": [],
+            "jander": [],
+            "daneel": [],
             "svm": [],
             "knn": [],
             "rf": []
         },
         "mrna": {
-            "pam": [],
-            "moli": [],
+            "jander": [],
+            "daneel": [],
             "svm": [],
             "knn": [],
             "rf": []
         },
         "mirna": {
-            "pam": [],
-            "moli": [],
+            "jander": [],
+            "daneel": [],
             "svm": [],
             "knn": [],
             "rf": []
         },
         "combined": {
-            "pam": [],
-            "moli": [],
+            "jander": [],
+            "daneel": [],
             "svm": [],
             "knn": [],
             "rf": []
@@ -242,13 +242,13 @@ for i in range(10):
         barcodes[omic] = list(test_set["pheno"].index.values)
         models[omic] = dict()
 
-        # DNN - PAM
-        models[omic]["pam"], acc = train_dnn_classifier(Jander, training_set, validation_set, test_set)
-        stats["base"][omic]["pam"].append(acc)
+        # DNN - Jander
+        models[omic]["jander"], acc = train_dnn_classifier(Jander, training_set, validation_set, test_set)
+        stats["base"][omic]["jander"].append(acc)
 
-        # DNN - MOLI
-        models[omic]["moli"], acc = train_dnn_classifier(Daneel, training_set, validation_set, test_set)
-        stats["base"][omic]["moli"].append(acc)
+        # DNN - Daneel
+        models[omic]["daneel"], acc = train_dnn_classifier(Daneel, training_set, validation_set, test_set)
+        stats["base"][omic]["daneel"].append(acc)
 
         # SVM
         models[omic]["svm"], acc = train_ml_classifier(training_set, test_set, SVC, {"C": 1, "kernel": "rbf"},
@@ -277,22 +277,22 @@ for o, omic_stats in stats["base"].items():
 
 stats["single"] = {
     "methylation": {
-        "pam": dict(),
-        "moli": dict(),
+        "jander": dict(),
+        "daneel": dict(),
         "svm": dict(),
         "knn": dict(),
         "rf": dict()
     },
     "mrna": {
-        "pam": dict(),
-        "moli": dict(),
+        "jander": dict(),
+        "daneel": dict(),
         "svm": dict(),
         "knn": dict(),
         "rf": dict()
     },
     "mirna": {
-        "pam": dict(),
-        "moli": dict(),
+        "jander": dict(),
+        "daneel": dict(),
         "svm": dict(),
         "knn": dict(),
         "rf": dict()
@@ -300,27 +300,29 @@ stats["single"] = {
 }
 stats["combined"] = {
     "methylation": {
-        "pam": dict(),
-        "moli": dict(),
+        "jander": dict(),
+        "daneel": dict(),
         "svm": dict(),
         "knn": dict(),
         "rf": dict()
     },
     "mrna": {
-        "pam": dict(),
-        "moli": dict(),
+        "jander": dict(),
+        "daneel": dict(),
         "svm": dict(),
         "knn": dict(),
         "rf": dict()
     },
     "mirna": {
-        "pam": dict(),
-        "moli": dict(),
+        "jander": dict(),
+        "daneel": dict(),
         "svm": dict(),
         "knn": dict(),
         "rf": dict()
     }
 }
+
+# Effect of noise on data
 for omic in ["methylation", "mrna", "mirna"]:
     for sigma in np.linspace(0.01, 100, num=100):
         beta = datasets[omic]["original"]["beta"].loc[barcodes[omic]]
@@ -328,9 +330,9 @@ for omic in ["methylation", "mrna", "mirna"]:
         pheno = datasets[omic]["original"]["pheno"].loc[barcodes[omic]]
         new_dataset = {"beta": beta, "pheno": pheno}
         new_embedded = encoders[omic].encode_methylation_array(new_dataset)
-        stats["single"][omic]["pam"][sigma] = models[omic]["pam"]\
+        stats["single"][omic]["jander"][sigma] = models[omic]["jander"]\
             .evaluate(new_embedded["beta"].to_numpy(), pd.get_dummies(new_embedded["pheno"]["subtype"]).to_numpy())
-        stats["single"][omic]["moli"][sigma] = models[omic]["moli"]\
+        stats["single"][omic]["daneel"][sigma] = models[omic]["daneel"]\
             .evaluate(new_embedded["beta"].to_numpy(), pd.get_dummies(new_embedded["pheno"]["subtype"]).to_numpy())
         stats["single"][omic]["svm"][sigma] = models[omic]["svm"].score(new_embedded["beta"],
                                                                         new_embedded["pheno"].values.ravel())
@@ -352,9 +354,9 @@ for omic in ["methylation", "mrna", "mirna"]:
                 }))
 
         new_embedded = merge_methylation_arrays(*to_merge)
-        stats["combined"][omic]["pam"][sigma] = models["combined"]["pam"] \
+        stats["combined"][omic]["jander"][sigma] = models["combined"]["jander"] \
             .evaluate(new_embedded["beta"].to_numpy(), pd.get_dummies(new_embedded["pheno"]["subtype"]).to_numpy())
-        stats["combined"][omic]["moli"][sigma] = models["combined"]["moli"] \
+        stats["combined"][omic]["daneel"][sigma] = models["combined"]["daneel"] \
             .evaluate(new_embedded["beta"].to_numpy(), pd.get_dummies(new_embedded["pheno"]["subtype"]).to_numpy())
         stats["combined"][omic]["svm"][sigma] = \
             models["combined"]["svm"].score(new_embedded["beta"], new_embedded["pheno"].values.ravel())
@@ -364,5 +366,30 @@ for omic in ["methylation", "mrna", "mirna"]:
             models["combined"]["rf"].score(new_embedded["beta"], new_embedded["pheno"].values.ravel())
 
 for omic in ["methylation", "mrna", "mirna"]:
-    for ml in ["pam", "moli", "svm", "knn", "rf"]:
+    for ml in ["jander", "daneel", "svm", "knn", "rf"]:
         plot_against_combined(stats, ml, omic)
+
+# Effect of noise on single genes
+noise_on_genes = dict()
+index = set(methylation_dataset["beta"].columns.values)
+for gene in pam50_genes:
+    if gene in gene_to_cpgs:
+        noise_on_genes[gene] = list()
+        for i in range(100):
+            new_noise = list()
+            for sigma in np.linspace(0.001, 100, num=50):
+                beta = datasets["methylation"]["original"]["beta"].loc[barcodes["methylation"]]
+                noise = np.zeros(beta.shape)
+                gene_cpgs = gene_to_cpgs[gene].intersection(index)
+                for cpg in gene_cpgs:
+                    cpg_col = beta.columns.get_loc(cpg)
+                    noise[:, cpg_col] = np.random.normal(0, sigma, beta.shape[0])
+                beta = beta + noise
+                pheno = datasets["methylation"]["original"]["pheno"].loc[barcodes["methylation"]]
+                new_dataset = {"beta": beta, "pheno": pheno}
+                new_embedded = encoders["methylation"].encode_methylation_array(new_dataset)
+                new_noise.append(models["methylation"]["daneel"].evaluate(
+                    new_embedded["beta"].to_numpy(),
+                    pd.get_dummies(new_embedded["pheno"]["subtype"]).to_numpy()))
+            noise_on_genes[gene].append(new_noise)
+pickle.dump(noise_on_genes, open("../data/noise_effect_on_genes.pkl", "wb"))
