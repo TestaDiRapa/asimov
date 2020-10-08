@@ -14,7 +14,7 @@ def mrna_dataset_creator(mrna_folders, genes, barcode=True):
     """
     finder = BarcodeFinder()
     new_dataset = pd.DataFrame(columns=genes + ["barcode"])
-    for path in folder_generator(mrna_folders, r'FPKM\.txt\.gz$'):
+    for path in folder_generator(mrna_folders, r'htseq\.counts\.gz$'):
         dataset = pd.read_csv(path, compression="gzip", sep='\t', index_col=0, header=None, na_values="NA")
         dataset = dataset.dropna().loc[genes].T
         dataset.columns.name = None

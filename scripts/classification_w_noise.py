@@ -193,6 +193,15 @@ datasets["combined"] = {
     )
 }
 
+count_tmp = dict()
+for el in datasets["combined"]["embedded"]["pheno"]["subtype"].unique():
+    count_tmp[el] = 0
+
+for index, row in datasets["combined"]["embedded"]["pheno"].iterrows():
+    count_tmp[row["subtype"]] += 1
+
+print(count_tmp)
+raise(Exception())
 encoders = {
     "methylation": methylation_encoder,
     "mrna": mrna_encoder,
@@ -369,10 +378,12 @@ for omic in ["methylation", "mrna", "mirna"]:
     for ml in ["jander", "daneel", "svm", "knn", "rf"]:
         plot_against_combined(stats, ml, omic)
 
+raise(Exception(""))
 # Effect of noise on single genes
 noise_on_genes = dict()
 index = set(methylation_dataset["beta"].columns.values)
 for gene in pam50_genes:
+    print(gene)
     if gene in gene_to_cpgs:
         noise_on_genes[gene] = list()
         for i in range(100):

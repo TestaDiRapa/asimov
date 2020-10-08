@@ -38,7 +38,7 @@ def correct_labels(methylation_array):
             if barcode in gt_index and gt_check.loc[barcode]["PAM50 subtype"] != "Normal-like":
                 if gt_check.loc[barcode]["PAM50 subtype"] != "NA":
                     methylation_array["pheno"].at[pheno_index, "subtype"] = gt_check.loc[barcode]["PAM50 subtype"]
-                elif gt_check.loc[barcode]["PAM50 subtype"] == "NA" and count_na < 150:
+                elif gt_check.loc[barcode]["PAM50 subtype"] == "NA" and count_na < 200:
                     count_na += 1
                     methylation_array["pheno"].at[pheno_index, "subtype"] = "NA"
                 else:
@@ -59,7 +59,7 @@ def train_dnn_classifier(classifier, train_set, val_set, test_data):
               MethylationArrayGenerator(val_set, "subtype"),
               500,
               verbose=0,
-              callbacks=[EarlyStopping(monitor="val_loss", min_delta=0.05, patience=20)])
+              callbacks=[EarlyStopping(monitor="loss", min_delta=0.05, patience=20)])
     test_accuracy = model.evaluate(test_data["beta"].to_numpy(),
                                    pd.get_dummies(test_data["pheno"]["subtype"]).to_numpy())
     return model, test_accuracy
@@ -207,7 +207,6 @@ encoders = {
     "mirna": mirna_encoder
 }
 print(datasets["combined"]["embedded"])
-raise(Exception())
 # PART 3
 # Training the different classifiers
 stats = {

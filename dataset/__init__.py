@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.firefox.options import Options
 import os
 import pandas as pd
@@ -38,6 +38,9 @@ class BarcodeFinder:
                 self.driver.quit()
                 self.driver = webdriver.Firefox(options=self.driver_options)
                 self.driver.maximize_window()
+            except NoSuchElementException:
+                barcode = "NOT_FOUND"
+                timeout_flag = False
         return barcode
 
     def quit(self):

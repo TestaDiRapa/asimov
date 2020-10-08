@@ -8,7 +8,7 @@ import pickle
 
 genes = dict()
 num_files = 0
-for path in folder_generator(["../data/breast_mrna_exp", "../data/other_mrna_exp"], r'FPKM\.txt\.gz$'):
+for path in folder_generator(["../data/mrna_count"], r'htseq\.counts\.gz$'):
     num_files += 1
     dataset = pd.read_csv(path, compression="gzip", sep='\t', index_col=0, header=None, na_values="NA")
     dataset = dataset.dropna()
@@ -61,17 +61,14 @@ for cpg, num_instances in genes.items():
         count["9-0"] += 1
 
 print(num_files, len(genes.keys()))
-mrna_folders = [os.path.join("..", "data", "breast_mrna_exp"), os.path.join("..", "data", "other_mrna_exp")]
-dataset = mrna_dataset_creator(mrna_folders, final_genes, barcode=False)
+mrna_folders = [os.path.join("..", "data", "mrna_count")]
+dataset = mrna_dataset_creator(mrna_folders, final_genes, barcode=True)
 print(dataset)
-pickle.dump(dataset, open("../data/mrna_exp_all.pkl", "wb"))
-"""
-dataset = pickle.load(open("../data/mrna_exp.pkl", "rb"))
-
-# met_dataset = generate_subtype_methylation_array("../data/breast_clinical", dataset)
-# pickle.dump(met_dataset, open("../data/mrna_exp_ma.pkl", "wb"))
-over_rate_mirna = filter_expression_by_rate(dataset, 0.95)
-print(len(over_rate_mirna))
-dataset = dataset[over_rate_mirna]
+pickle.dump(dataset, open("../data/mrna_exp_count.pkl", "wb"))
+# dataset = pickle.load(open("../data/mrna_exp.pkl", "rb"))
+met_dataset = generate_subtype_methylation_array("../data/breast_clinical", dataset)
+pickle.dump(met_dataset, open("../data/mrna_exp_count_ma.pkl", "wb"))
+# over_rate_mirna = filter_expression_by_rate(dataset, 0.95)
+# print(len(over_rate_mirna))
+# dataset = dataset[over_rate_mirna]
 print("Finished")
-"""
