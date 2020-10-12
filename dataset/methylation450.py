@@ -23,12 +23,18 @@ def create_methylation_dataset(folders, islands=None, filters=dict()):
         break
 
     new_dataset = pd.DataFrame(columns=filtered_islands+["barcode"])
+    count = 0
     for path in folder_generator(folders, r'^jhu-usc\..+txt$'):
-        dataset = pd.read_csv(path, sep='\t', na_values="NA", index_col=0)
-        dataset = dataset[["Beta_value"]].dropna().loc[filtered_islands].T.reset_index().drop("index", axis=1)
-        dataset.columns.name = None
-        barcode = re.search(r'TCGA-[A-Z0-9]{2}-[A-Z0-9]{4}-[A-Z0-9]{3}-[A-Z0-9]{3}-[A-Z0-9]{4}-[A-Z0-9]{2}', path).group()
-        dataset["barcode"] = barcode
-        new_dataset = new_dataset.append(dataset)
+        try:
+            dataset = pd.read_csv(path, sep='\t', na_values="NA", index_col=0)
+            dataset = dataset[["Beta_value"]].dropna().loc[filtered_islands].T.reset_index().drop("index", axis=1)
+            dataset.columns.name = None
+            barcode = re.search(r'TCGA-[A-Z0-9]{2}-[A-Z0-9]{4}-[A-Z0-9]{3}-[A-Z0-9]{3}-[A-Z0-9]{4}-[A-Z0-9]{2}', path).group()
+            dataset["barcode"] = barcode
+            new_dataset = new_dataset.append(dataset)
+            count += 1
+            print(count)
+        except KeyError:
+            print("Skipping file")
     new_dataset = new_dataset.set_index("barcode")
     return new_dataset
