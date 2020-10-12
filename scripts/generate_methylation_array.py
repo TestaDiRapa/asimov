@@ -1,11 +1,11 @@
-'''
-from methylnet_utils import generate_subtype_methylation_array
+from dataset.methylation450 import create_methylation_dataset
+import pickle
 
-generate_subtype_methylation_array("../data/breast_clinical",
-                                   "../data/breast_methylation_450_pd.pkl",
-                                   "../data/breast_methylation_450_ma.pkl")
-'''
-from methylnet_utils import split_methylation_array_by_pheno
-split_methylation_array_by_pheno("../data/final_preprocessed/methyl_array.pkl",
-                                 "subtype",
-                                 "../data/train_val_test_sets")
+islands = pickle.load(open("../data/pam50_cpg.pkl", "rb"))
+dataset = create_methylation_dataset(["../data/other_methylation_exp"], islands)
+print(dataset)
+print(islands)
+all_data = pickle.load(open("../data/methylation_exp_all.pkl", "rb"))
+all_data = all_data.append(dataset)
+print(all_data)
+pickle.dump(all_data, open("../data/methylation_exp_all.pkl", "wb"))
