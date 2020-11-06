@@ -78,6 +78,32 @@ def split_methylation_array_by_pheno(methylation_array_source, pheno_column, val
            {"beta": beta.loc[val_barcodes], "pheno": pheno.loc[val_barcodes]}
 
 
+def balanced_kcv(methylation_array_source, pheno_column, k=10):
+    """
+    This function take a methylation array and split it into training, validation and test set keeping the classes
+    balancing
+    :param methylation_array_source: the methylation array filename or the methylation array itself
+    :param pheno_column: the column containing the classes
+    :param k: the number of folds
+    :return train, test and validation set
+    """
+    if type(methylation_array_source) == str:
+        methylation_array = pickle.load(open(methylation_array_source, "rb"))
+    else:
+        methylation_array = methylation_array_source
+    pheno = methylation_array["pheno"]
+
+    kcv_barcodes = [[] for i in range(k)]
+    for class_ in pheno[pheno_column].unique():
+        barcodes = pheno[pheno[pheno_column] == class_].index.to_list()
+        fold_size = len(barcodes)//k
+        for i in range(k-1):
+            kcv_barcodes[i] += barcodes[fold_size*i:fold_size*(i+1)]
+        kcv_barcodes[k-1] += barcodes[fold_size*(k-1):]
+
+    return kcv_barcodes
+
+
 def merge_methylation_arrays(*args):
     """
     This functions merges several methylation arrays into a single methylation array using the common row by index. The

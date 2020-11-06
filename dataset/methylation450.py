@@ -27,7 +27,7 @@ def create_methylation_dataset(folders, islands=None, filters=dict()):
     for path in folder_generator(folders, r'^jhu-usc\..+txt$'):
         try:
             dataset = pd.read_csv(path, sep='\t', na_values="NA", index_col=0)
-            dataset = dataset[["Beta_value"]].dropna().loc[filtered_islands].T.reset_index().drop("index", axis=1)
+            dataset = dataset[["Beta_value"]].loc[filtered_islands].T.reset_index().drop("index", axis=1)
             dataset.columns.name = None
             barcode = re.search(r'TCGA-[A-Z0-9]{2}-[A-Z0-9]{4}-[A-Z0-9]{3}-[A-Z0-9]{3}-[A-Z0-9]{4}-[A-Z0-9]{2}', path).group()
             dataset["barcode"] = barcode

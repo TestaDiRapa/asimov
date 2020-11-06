@@ -1,6 +1,7 @@
 from methylnet_utils import balanced_kcv, merge_methylation_arrays
 from models.autoencoders import Giskard
 from models.classifiers import Daneel, Jander
+from models.classifiers import NeuralClassifier
 from models.generators import AutoencoderGenerator, MethylationArrayGenerator
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
@@ -12,7 +13,7 @@ import numpy as np
 import pandas as pd
 import pickle
 
-tf.get_logger().setLevel('ERROR')
+tf.get_logger().setLevel('WARNING')
 
 
 # SOME FUNCTIONS
@@ -101,25 +102,6 @@ def train_dnn_classifier(classifier, train_set, val_set, test_data):
     return model, test_accuracy
 
 
-def train_dnn_classifier_deep_cc(classifier, train_set, val_set, test_data):
-    params = {"input_shape": train_set["beta"].shape[1], "model_serialization_path": "../data/models/classifier/",
-              "dropout_rate": 0.3, "output_shape": len(train_set["pheno"]["subtype"].unique())}
-    model = classifier(**params)
-    model.fit(MethylationArrayGenerator(train_set, "subtype"),
-              MethylationArrayGenerator(val_set, "subtype"),
-              40,
-              verbose=0,
-              callbacks=[EarlyStopping(monitor="val_loss", min_delta=0.05, patience=20)])
-    dummies = pd.get_dummies(train_set["pheno"]["subtype"]).columns.to_list()
-    tmp_acc = []
-    for p, r in zip(model.predict(test_data["beta"].to_numpy()), test_data["pheno"].values.ravel()):
-        if dummies[np.argmax(p)] == r:
-            tmp_acc.append(1)
-        else:
-            tmp_acc.append(0)
-    return model, np.mean(tmp_acc)
-
-
 def train_ml_classifier(train_set, test_data, model, params, val_set=None):
     if val_set is not None:
         train_set["beta"] = train_set["beta"].append(val_set["beta"])
@@ -181,42 +163,8 @@ def plot_against_combined(acc_scores, ml_method, omic_type):
     plt.savefig("../data/results/{}_{}_single_vs_combined.png".format(ml_method, omic_type))
 
 
-def remove_classes(methylation_array, classes):
-    pheno = methylation_array["pheno"]
-    to_remove = list(pheno[pheno["subtype"].isin(classes)].index.values)
-    print("REMOVING", len(to_remove))
-    return {
-        "beta": methylation_array["beta"].drop(to_remove),
-        "pheno": methylation_array["pheno"].drop(to_remove)
-    }
-
-
-def spec_and_sens(stats, cm, omic, method):
-    for c in cm.index.values:
-        if c not in stats["sp"][omic][method]:
-            stats["sp"][omic][method][c] = []
-        if c not in stats["sn"][omic][method]:
-            stats["sn"][omic][method][c] = []
-        tp = cm.loc[c, c]
-        fp = cm.loc[:, c].sum() - tp
-        fn = cm.loc[c, :].sum() - tp
-        tn = cm.sum().sum() - tp - fp - fn
-
-        stats["sp"][omic][method][c].append(tn/(tn+fp))
-        stats["sn"][omic][method][c].append(tp / (tp + fn))
-
-
-def ml_confusion_matrix(model, ma, target):
-    columns = list(ma["pheno"][target].unique())
-    confusion_matrix = pd.DataFrame(data=np.zeros((len(columns), len(columns))), columns=columns, index=columns)
-    for r, p in zip(ma["pheno"].values.ravel(), model.predict(ma["beta"])):
-        confusion_matrix.at[r, p] += 1
-    return confusion_matrix
-
-
 # Defining parameters for training
 omics = ["methylation", "mrna", "mirna", "combined"]
-methods = ["jander", "daneel", "svm", "knn", "rf"]
 methylation_latent_dimension = 20
 mirna_latent_dimension = 20
 mrna_latent_dimension = 20
@@ -228,7 +176,7 @@ pam50_genes = open("../data/PAM50_genes.txt").read().split('\n')
 pam50_ENSG = open("../data/PAM50_ENSG.txt").read().split('\n')
 gene_to_cpgs = pickle.load(open("../data/genes_cpg_interaction.pkl", "rb"))
 mirna_to_genes = pickle.load(open("../data/mirna_genes_interaction.pkl", "rb"))
-
+ghr_data = pd.read_csv("../data/ghr_genes.txt", sep='\t')
 # CpGs selection
 pam50_cpgs = set()
 for gene in pam50_genes:
@@ -246,286 +194,109 @@ for m in pam50_mirnas:
     for gene in mirna_to_genes[m]:
         if gene[2] > 0.8:
             pam50_mrnas.append(gene[0])
-
-pam50_cpgs = pickle.load(open("../data/cpg_list_27k.pkl", "rb"))
+# pam50_mrnas = pam50_ENSG
 
 # PART 2
 # Training the different autoencoders
 # Training the methylation autoencoder
 datasets = dict()
-methylation_dataset_450k = pickle.load(open("../data/final_preprocessed/breast_methylation_450_ma.pkl", "rb"))
-index = set(methylation_dataset_450k["beta"].columns.values)
+methylation_dataset = pickle.load(open("../data/final_preprocessed/breast_methylation_450_ma.pkl", "rb"))
+index = set(methylation_dataset["beta"].columns.values)
 pam50_cpgs = index.intersection(pam50_cpgs)
-methylation_dataset_450k["beta"] = methylation_dataset_450k["beta"][pam50_cpgs]
-# methylation_dataset_27k = pickle.load(open("../data/breast_methylation_27k.pkl", "rb"))
-# methylation_dataset = dict()
-# methylation_dataset["beta"] = methylation_dataset_27k["beta"].append(methylation_dataset_450k["beta"])
-# methylation_dataset["pheno"] = methylation_dataset_27k["pheno"].append(methylation_dataset_450k["pheno"])
-methylation_dataset = methylation_dataset_450k
-print(methylation_dataset)
-# encoder_dataset = pickle.load(open("../data/methylation_exp_all.pkl", "rb"))
-# methylation_encoder = train_autoencoder_all(encoder_dataset, methylation_latent_dimension)
-methylation_encoder = train_autoencoder(methylation_dataset, methylation_latent_dimension)
+pickle.dump(pam50_cpgs, open("../data/pam50_cpg.pkl", "wb"))
+methylation_dataset["beta"] = methylation_dataset["beta"][pam50_cpgs]
 methylation_corrected = correct_labels(methylation_dataset)
-methylation_tmp = pickle.load(open("../data/final_preprocessed/breast_methylation_450_ma.pkl", "rb"))
-methylation_tmp["beta"] = methylation_tmp["beta"][pam50_cpgs]
-# methylation_corrected = remove_classes(methylation_corrected, ["NA", "control"])
-datasets["methylation"] = {
-    "original": methylation_corrected,
-    # "embedded": methylation_encoder.encode_methylation_array(methylation_corrected)
-    "embedded": methylation_corrected
-}
+
 # Training the mRNA autoencoder
 mrna_dataset = pickle.load(open("../data/mrna_exp_ma.pkl", "rb"))
 mrna_dataset["beta"] = mrna_dataset["beta"].rename(columns=lambda g: g.split('.')[0])
-index = set(mrna_dataset["beta"].columns.values)
-pam50_mrnas = index.intersection(pam50_mrnas)
 mrna_dataset["beta"] = mrna_dataset["beta"][pam50_mrnas]
-# encoder_dataset = pickle.load(open("../data/mrna_exp_all.pkl", "rb"))
-# encoder_dataset = encoder_dataset.rename(columns=lambda g: g.split('.')[0])
-# encoder_dataset = encoder_dataset[pam50_mrnas]
-# mrna_encoder = train_autoencoder_all(encoder_dataset, mrna_latent_dimension)
-mrna_encoder = train_autoencoder(mrna_dataset, mrna_latent_dimension)
 mrna_corrected = correct_labels(mrna_dataset)
-# mrna_corrected = remove_classes(mrna_corrected, ["NA", "control"])
-mrna_tmp = pickle.load(open("../data/mrna_exp_ma.pkl", "rb"))
-mrna_tmp["beta"] = mrna_tmp["beta"].rename(columns=lambda g: g.split('.')[0])[pam50_mrnas]
-datasets["mrna"] = {
-    "original": mrna_corrected,
-    "embedded": mrna_encoder.encode_methylation_array(mrna_corrected)
-}
+
 # Training the miRNA autoencoder
 mirna_dataset = pickle.load(open("../data/mirna_exp_ma.pkl", "rb"))
 mirna_dataset["beta"] = mirna_dataset["beta"][pam50_mirnas]
-# encoder_dataset = pickle.load(open("../data/mirna_exp_all.pkl", "rb"))
-# encoder_dataset = encoder_dataset[pam50_mirnas]
-# mirna_encoder = train_autoencoder_all(encoder_dataset, mirna_latent_dimension)
-mirna_encoder = train_autoencoder(mirna_dataset, mirna_latent_dimension)
 mirna_corrected = correct_labels(mirna_dataset)
-# mirna_corrected = remove_classes(mirna_corrected, ["NA", "control"])
-mirna_tmp = pickle.load(open("../data/mirna_exp_ma.pkl", "rb"))
-mirna_tmp["beta"] = mirna_tmp["beta"][pam50_mirnas]
-datasets["mirna"] = {
-    "original": mirna_corrected,
-    "embedded": mirna_encoder.encode_methylation_array(mirna_corrected)
-}
-# Combined dataset
-datasets["combined"] = {
-    "embedded": merge_methylation_arrays(
-        datasets["methylation"]["embedded"],
-        datasets["mrna"]["embedded"],
-        datasets["mirna"]["embedded"]
-    )
-}
 
-for omic in omics:
-    print_class_count(datasets[omic]["embedded"])
+methylation_encoder_dataset = pickle.load(open("../data/final_preprocessed/breast_methylation_450_ma.pkl", "rb"))
+index = set(methylation_encoder_dataset["beta"].columns.values)
+pam50_cpgs = index.intersection(pam50_cpgs)
+methylation_encoder_dataset = methylation_encoder_dataset["beta"][pam50_cpgs]
+methylation_encoder_dataset = methylation_encoder_dataset.rename(index=lambda b: "-".join(b.split("-")[:4]))
+index_1 = list(methylation_encoder_dataset.index.drop_duplicates(keep=False).values)
+methylation_encoder_dataset = methylation_encoder_dataset.loc[index_1]
 
-encoders = {
-    "methylation": methylation_encoder,
-    "mrna": mrna_encoder,
-    "mirna": mirna_encoder
-}
+mrna_encoder_dataset = pickle.load(open("../data/mrna_exp_ma.pkl", "rb"))["beta"]
+mrna_encoder_dataset = mrna_encoder_dataset.rename(columns=lambda g: g.split('.')[0])
+mrna_encoder_dataset = mrna_encoder_dataset[pam50_mrnas]
+mrna_encoder_dataset = mrna_encoder_dataset.rename(index=lambda b: "-".join(b.split("-")[:4]))
+index_2 = list(mrna_encoder_dataset.index.drop_duplicates(keep=False).values)
+mrna_encoder_dataset = mrna_encoder_dataset.loc[index_2]
+
+mirna_encoder_dataset = pickle.load(open("../data/mirna_exp_ma.pkl", "rb"))["beta"]
+mirna_encoder_dataset = mirna_encoder_dataset[pam50_mirnas]
+mirna_encoder_dataset = mirna_encoder_dataset.rename(index=lambda b: "-".join(b.split("-")[:4]))
+index_3 = list(mirna_encoder_dataset.index.drop_duplicates(keep=False).values)
+mirna_encoder_dataset = mirna_encoder_dataset.loc[index_3]
+
+train_df = pd.concat([methylation_encoder_dataset, mirna_encoder_dataset, mrna_encoder_dataset], axis=1, join='inner')
+encoder = train_autoencoder_all(train_df, 60)
+combined_dataset = merge_methylation_arrays(methylation_corrected, mirna_corrected, mrna_corrected)
+combined_embedded = encoder.encode_methylation_array(combined_dataset)
+print_class_count(combined_embedded)
 
 # PART 3
 # Training the different classifiers
-stats = dict()
-stats["base"] = dict()
-stats["sp"] = dict()
-stats["sn"] = dict()
-for omic in omics:
-    stats["base"][omic] = dict()
-    stats["sp"][omic] = dict()
-    stats["sn"][omic] = dict()
-    for m in methods:
-        stats["base"][omic][m] = list()
-        stats["sp"][omic][m] = dict()
-        stats["sn"][omic][m] = dict()
-
-barcodes, models = dict(), dict()
-k = 10
-
-for omic in omics:
-    kcv_barcodes = balanced_kcv(datasets[omic]["embedded"], "subtype", k)
-    for i in range(k):
-        val_index = i
-        test_index = i+1
-        if test_index == k:
-            test_index = 0
-        validation_set = ma_loc(datasets[omic]["embedded"], kcv_barcodes[val_index])
-        test_set = ma_loc(datasets[omic]["embedded"], kcv_barcodes[test_index])
-        training_barcodes = []
-        for j in range(k):
-            if j != val_index and j != test_index:
-                training_barcodes += kcv_barcodes[j]
-        training_set = ma_loc(datasets[omic]["embedded"], training_barcodes)
-        barcodes[omic] = list(test_set["pheno"].index.values)
-        models[omic] = dict()
-
-        # DNN - Jander
-        models[omic]["jander"], acc = train_dnn_classifier(Jander, training_set, validation_set, test_set)
-        stats["base"][omic]["jander"].append(acc)
-        spec_and_sens(stats,
-                      models[omic]["jander"].confusion_matrix(test_set["beta"].to_numpy(), test_set["pheno"], "subtype"),
-                      omic,
-                      "jander")
-
-        # DNN - Daneel
-        models[omic]["daneel"], acc = train_dnn_classifier(Daneel, training_set, validation_set, test_set)
-        stats["base"][omic]["daneel"].append(acc)
-        spec_and_sens(stats,
-                      models[omic]["jander"].confusion_matrix(test_set["beta"].to_numpy(), test_set["pheno"], "subtype"),
-                      omic,
-                      "daneel")
-
-        # SVM
-        models[omic]["svm"], acc = train_ml_classifier(training_set, test_set, SVC, {"C": 1, "kernel": "rbf"},
-                                                       validation_set)
-        stats["base"][omic]["svm"].append(acc)
-        spec_and_sens(stats,
-                      ml_confusion_matrix(models[omic]["svm"], test_set, "subtype"),
-                      omic,
-                      "svm")
-
-        # KNN
-        models[omic]["knn"], acc = train_ml_classifier(training_set, test_set, KNeighborsClassifier,
-                                                       {"n_neighbors": 75}, validation_set)
-        stats["base"][omic]["knn"].append(acc)
-        spec_and_sens(stats,
-                      ml_confusion_matrix(models[omic]["knn"], test_set, "subtype"),
-                      omic,
-                      "knn")
-
-        # RF
-        models[omic]["rf"], acc = train_ml_classifier(training_set, test_set, RandomForestClassifier,
-                                                      {"n_estimators": 2000, "max_features": "auto"}, validation_set)
-        stats["base"][omic]["rf"].append(acc)
-        spec_and_sens(stats,
-                      ml_confusion_matrix(models[omic]["rf"], test_set, "subtype"),
-                      omic,
-                      "rf")
-
-datasets["combined"]["original"] = {
-    "methylation": slice_methylation_array_to_merge(datasets["methylation"]["original"], barcodes["combined"]),
-    "mrna": slice_methylation_array_to_merge(datasets["mrna"]["original"], barcodes["combined"]),
-    "mirna": slice_methylation_array_to_merge(datasets["mirna"]["original"], barcodes["combined"])
+stats = {
+        "jander": [],
+        "daneel": [],
+        "svm": [],
+        "knn": [],
+        "rf": []
 }
 
-for o, omic_stats in stats["base"].items():
-    for c, scores in omic_stats.items():
-        print("{} {} mean acc: {:.3f} - std {:.3f}".format(o, c, np.mean(scores), np.std(scores)))
-print()
 
-for o in omics:
-    print(o)
-    for m in methods:
-        print(m)
-        for c in stats["sp"][o][m].keys():
-            print("{} - sp: {:.3f} - sn {:.3f}".format(c, np.mean(stats["sp"][o][m][c]), np.mean(stats["sn"][o][m][c])))
-        print()
-
-deep_cc_brca = pd.read_csv("../data/deep_cc_brca.csv", index_col=1).rename(index=lambda b: "-".join(b.split("-")[:4]))
-deep_cc_brca = deep_cc_brca.dropna()
-deep_cc_brca = deep_cc_brca.replace(["LumB", "LumA", "control", "Basal", "NA", "Her2"],
-                                    ["Luminal B", "Luminal A", "control", "Basal-like", "NA", "HER2-enriched"])
-deep_cc_brca = deep_cc_brca.loc[:, ["DeepCC"]].rename(columns={"DeepCC": "subtype"})
-
-for omic in omics:
-    datasets[omic]["embedded"]["pheno"].rename(index=lambda b: "-".join(b.split("-")[:4]), inplace=True)
-    datasets[omic]["embedded"]["beta"].rename(index=lambda b: "-".join(b.split("-")[:4]), inplace=True)
-
-ref_index = set(datasets["combined"]["embedded"]["pheno"].index.values)
-cc_index = set(deep_cc_brca.index.values)
-deep_cc_brca = deep_cc_brca.loc[cc_index.intersection(ref_index)]
-print(deep_cc_brca)
-deep_cc_kcv = balanced_kcv({"beta": pd.DataFrame(), "pheno": deep_cc_brca}, "subtype", k)
-
-stats_cc = dict()
-stats_cc["base"] = dict()
-stats_cc["sp"] = dict()
-stats_cc["sn"] = dict()
-for omic in omics:
-    stats_cc["base"][omic] = dict()
-    stats_cc["sp"][omic] = dict()
-    stats_cc["sn"][omic] = dict()
-    for m in methods:
-        stats_cc["base"][omic][m] = list()
-        stats_cc["sp"][omic][m] = dict()
-        stats_cc["sn"][omic][m] = dict()
-
-for omic in omics:
-    models[omic] = dict()
-    for cc_barcodes in deep_cc_kcv:
-        test_set = ma_loc(datasets[omic]["embedded"], cc_barcodes)
-        for b in test_set["pheno"].index.values:
-            test_set["pheno"].at[b,"subtype"] = deep_cc_brca.loc[b, "subtype"]
-        new_dataset = {
-            "beta": datasets[omic]["embedded"]["beta"].drop(cc_barcodes),
-            "pheno": datasets[omic]["embedded"]["pheno"].drop(cc_barcodes)
-        }
-
-        kcv_barcodes = balanced_kcv(new_dataset, "subtype", k)
-        validation_set = ma_loc(new_dataset, kcv_barcodes[0])
-        training_barcodes = []
-        for j in range(1, k):
+barcodes, models = list(), dict()
+k = 10
+kcv_barcodes = balanced_kcv(combined_embedded, "subtype", k)
+for i in range(k):
+    val_index = i
+    test_index = i+1
+    if test_index == k:
+        test_index = 0
+    validation_set = ma_loc(combined_embedded, kcv_barcodes[val_index])
+    test_set = ma_loc(combined_embedded, kcv_barcodes[test_index])
+    training_barcodes = []
+    for j in range(k):
+        if j != val_index and j != test_index:
             training_barcodes += kcv_barcodes[j]
-        training_set = ma_loc(new_dataset, training_barcodes)
+    training_set = ma_loc(combined_embedded, training_barcodes)
+    barcodes = list(test_set["pheno"].index.values)
 
-        # DNN - Jander
-        models[omic]["jander"], acc = train_dnn_classifier_deep_cc(Jander, training_set, validation_set, test_set)
-        stats_cc["base"][omic]["jander"].append(acc)
-        spec_and_sens(stats_cc,
-                      models[omic]["jander"].confusion_matrix(test_set["beta"].to_numpy(), test_set["pheno"], "subtype"),
-                      omic,
-                      "jander")
+    # DNN - Jander
+    models["jander"], acc = train_dnn_classifier(Jander, training_set, validation_set, test_set)
+    stats["jander"].append(acc)
 
-        # DNN - Daneel
-        models[omic]["daneel"], acc = train_dnn_classifier_deep_cc(Daneel, training_set, validation_set, test_set)
-        stats_cc["base"][omic]["daneel"].append(acc)
-        spec_and_sens(stats_cc,
-                      models[omic]["jander"].confusion_matrix(test_set["beta"].to_numpy(), test_set["pheno"], "subtype"),
-                      omic,
-                      "daneel")
+    # DNN - Daneel
+    models["daneel"], acc = train_dnn_classifier(Daneel, training_set, validation_set, test_set)
+    stats["daneel"].append(acc)
 
-        # SVM
-        models[omic]["svm"], acc = train_ml_classifier(training_set, test_set, SVC, {"C": 1, "kernel": "rbf"},
-                                                       validation_set)
-        stats_cc["base"][omic]["svm"].append(acc)
-        spec_and_sens(stats_cc,
-                      ml_confusion_matrix(models[omic]["svm"], test_set, "subtype"),
-                      omic,
-                      "svm")
+    # SVM
+    models["svm"], acc = train_ml_classifier(training_set, test_set, SVC, {"C": 1, "kernel": "rbf"}, validation_set)
+    stats["svm"].append(acc)
 
-        # KNN
-        models[omic]["knn"], acc = train_ml_classifier(training_set, test_set, KNeighborsClassifier,
-                                                       {"n_neighbors": 75}, validation_set)
-        stats_cc["base"][omic]["knn"].append(acc)
-        spec_and_sens(stats_cc,
-                      ml_confusion_matrix(models[omic]["knn"], test_set, "subtype"),
-                      omic,
-                      "knn")
+    # KNN
+    models["knn"], acc = train_ml_classifier(training_set, test_set, KNeighborsClassifier,{"n_neighbors": 75},
+                                             validation_set)
+    stats["knn"].append(acc)
 
-        # RF
-        models[omic]["rf"], acc = train_ml_classifier(training_set, test_set, RandomForestClassifier,
-                                                      {"n_estimators": 2000, "max_features": "auto"}, validation_set)
-        stats_cc["base"][omic]["rf"].append(acc)
-        spec_and_sens(stats_cc,
-                      ml_confusion_matrix(models[omic]["rf"], test_set, "subtype"),
-                      omic,
-                      "rf")
+    # RF
+    models["rf"], acc = train_ml_classifier(training_set, test_set, RandomForestClassifier,
+                                            {"n_estimators": 2000, "max_features": "auto"}, validation_set)
+    stats["rf"].append(acc)
 
-for o, omic_stats in stats_cc["base"].items():
-    for c, scores in omic_stats.items():
-        print("{} {} mean acc: {:.3f} - std {:.3f}".format(o, c, np.mean(scores), np.std(scores)))
-
-for o in omics:
-    print(o)
-    for m in methods:
-        print(m)
-        for c in stats_cc["sp"][o][m].keys():
-            print("{} - sp: {:.3f} - sn {:.3f}".format(c, np.mean(stats_cc["sp"][o][m][c]),
-                                                       np.mean(stats_cc["sn"][o][m][c])))
-        print()
+for c, scores in stats.items():
+    print("{} mean acc: {} - std {}".format(c, np.mean(scores), np.std(scores)))
 
 raise(Exception())
 beta = datasets["combined"]["embedded"]["beta"].loc[barcodes["combined"]]

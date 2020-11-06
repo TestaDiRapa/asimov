@@ -78,6 +78,15 @@ class AbstractModel(ABC):
                 acc += 1
         return acc/len(y_test)
 
+    def confusion_matrix(self, x_test, y_test, label_column):
+        y_test = pd.get_dummies(y_test[label_column])
+        columns = list(y_test.columns.values)
+        confusion_matrix = pd.DataFrame(data=np.zeros((len(columns), len(columns))), columns=columns, index=columns)
+        y_test = y_test.to_numpy()
+        for p, r in zip(self.predict(x_test), y_test):
+            confusion_matrix.loc[columns[np.argmax(r)], columns[np.argmax(p)]] += 1
+        return confusion_matrix
+
     def fit(self, training_set, validation_set, epochs, callbacks=[], verbose=1):
         """
         This method fits the model using the EarlyStopping callback and save the weights
