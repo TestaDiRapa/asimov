@@ -71,6 +71,47 @@ class OmicArray:
         """
         return list(self.pheno[pheno_column].unique())
 
+    def get_omic_index(self):
+        """
+        Getter for the index of the beta dataframe
+        :return: a list
+        """
+        return self.beta.index
+
+    def get_pheno_index(self):
+        """
+        Getter for the index of the pheno dataframe
+        :return: a list
+        """
+        return self.pheno.index
+
+    def get_omic_column_index(self):
+        """
+        Getter for the column index of the beta dataframe
+        :return: a list
+        """
+        return self.beta.columns
+
+    def get_pheno_column_index(self):
+        """
+        Getter for the column index of the pheno dataframe
+        :return: a list
+        """
+        return self.pheno.columns
+
+    def append(self, omic_array, check_columns=True):
+        """
+        Append to the OmicArray another OmicArray with the same keys.
+        :param omic_array: Another OmicArray
+        :param check_columns: True if the indexes of the columns must be the same
+        """
+        if check_columns and not self.get_omic_column_index().equals(omic_array.get_omic_column_index()) \
+                and not self.get_pheno_column_index().equals(omic_array.get_pheno_column_index()):
+            raise Exception("The two omic arrays have different column indexes")
+
+        self.beta.append(omic_array.beta)
+        self.pheno.append(omic_array.pheno)
+
     def __str__(self):
         return "OMIC \n {} values for {} samples \n {} \n PHENO \n {} values for {} samples \n {}".format(
             self.beta.shape[1], self.beta.shape[0], self.beta.head(),
