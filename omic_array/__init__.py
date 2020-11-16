@@ -99,18 +99,21 @@ class OmicArray:
         """
         return self.pheno.columns
 
-    def append(self, omic_array, check_columns=True):
+    def append(self, omic_array):
         """
         Append to the OmicArray another OmicArray with the same keys.
         :param omic_array: Another OmicArray
-        :param check_columns: True if the indexes of the columns must be the same
         """
-        if check_columns and not self.get_omic_column_index().equals(omic_array.get_omic_column_index()) \
-                and not self.get_pheno_column_index().equals(omic_array.get_pheno_column_index()):
-            raise Exception("The two omic arrays have different column indexes")
+        
+        self.beta = self.beta.append(omic_array.beta)
+        self.pheno = self.pheno.append(omic_array.pheno)
 
-        self.beta.append(omic_array.beta)
-        self.pheno.append(omic_array.pheno)
+    def select_features_omic(self, features_array):
+        """
+        Select features using column values
+        :param features_array: a list
+        """
+        self.beta = self.beta[features_array]
 
     def __str__(self):
         return "OMIC \n {} values for {} samples \n {} \n PHENO \n {} values for {} samples \n {}".format(
