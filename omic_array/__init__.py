@@ -10,12 +10,14 @@ class OmicArray:
     A class to represent the MethylationArray data type. Renamed to OmicArray for clarity
     """
 
-    def __init__(self, filename=None, beta=None, pheno=None):
+    def __init__(self, filename=None, beta=None, pheno=None, omic_dtype=None, pheno_dtype=None):
         """
         Class constructor.
         :param filename: a .pkl file containing a dict with beta and pheno pandas dataframes
         :param beta: the beta values to init the object directly
         :param pheno: the pheno values to init the object directly
+        :param omic_dtype: if not None converts the omic dataframe to numpy dtype
+        :param pheno_dtype: if not None converts the pheno dataframe to numpy dtype
         """
         if filename is None and beta is None and pheno is None:
             raise OmicArrayInitError("An input source must be specified")
@@ -31,6 +33,11 @@ class OmicArray:
         else:
             self.beta = beta
             self.pheno = pheno
+
+        if omic_dtype is not None:
+            self.beta = self.beta.astype(omic_dtype)
+        if pheno_dtype is not None:
+            self.pheno = self.pheno.astype(pheno_dtype)
 
     def deep_copy(self):
         """
@@ -113,7 +120,8 @@ class OmicArray:
         Select features using column values
         :param features_array: a list
         """
-        self.beta = self.beta[features_array]
+        beta_columns = set(self.beta.columns.to_list())
+        self.beta = self.beta[beta_columns.intersection(set(features_array))]
 
     def __str__(self):
         return "OMIC \n {} values for {} samples \n {} \n PHENO \n {} values for {} samples \n {}".format(
