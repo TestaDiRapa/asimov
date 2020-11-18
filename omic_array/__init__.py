@@ -28,14 +28,17 @@ class OmicArray:
 
         if filename is not None:
             tmp = pickle.load(open(filename, "rb"))
-            self.beta = tmp["beta"]
+            if "beta" in tmp:
+                self.omic = tmp["beta"]
+            else:
+                self.omic = tmp["omic"]
             self.pheno = tmp["pheno"]
         else:
-            self.beta = beta
+            self.omic = beta
             self.pheno = pheno
 
         if omic_dtype is not None:
-            self.beta = self.beta.astype(omic_dtype)
+            self.omic = self.omic.astype(omic_dtype)
         if pheno_dtype is not None:
             self.pheno = self.pheno.astype(pheno_dtype)
 
@@ -44,7 +47,7 @@ class OmicArray:
         Creates a deep copy of the structure
         :return: an OmicArray
         """
-        return OmicArray(beta=self.beta.copy(), pheno=self.pheno.copy())
+        return OmicArray(beta=self.omic.copy(), pheno=self.pheno.copy())
 
     def pheno_replace(self, condition, column, value, inplace=True):
         """
@@ -68,7 +71,7 @@ class OmicArray:
         :param pheno_column: the pheno column containing the values
         :return: X and y
         """
-        return self.beta.to_numpy(), self.pheno[pheno_column].ravel()
+        return self.omic.to_numpy(), self.pheno[pheno_column].ravel()
 
     def pheno_unique_values(self, pheno_column):
         """
@@ -83,7 +86,7 @@ class OmicArray:
         Getter for the index of the beta dataframe
         :return: a list
         """
-        return self.beta.index
+        return self.omic.index
 
     def get_pheno_index(self):
         """
@@ -97,7 +100,7 @@ class OmicArray:
         Getter for the column index of the beta dataframe
         :return: a list
         """
-        return self.beta.columns
+        return self.omic.columns
 
     def get_pheno_column_index(self):
         """
@@ -112,7 +115,7 @@ class OmicArray:
         :param omic_array: Another OmicArray
         """
         
-        self.beta = self.beta.append(omic_array.beta)
+        self.omic = self.omic.append(omic_array.beta)
         self.pheno = self.pheno.append(omic_array.pheno)
 
     def select_features_omic(self, features_array):
@@ -120,10 +123,16 @@ class OmicArray:
         Select features using column values
         :param features_array: a list
         """
-        beta_columns = set(self.beta.columns.to_list())
-        self.beta = self.beta[beta_columns.intersection(set(features_array))]
+        beta_columns = set(self.omic.columns.to_list())
+        self.omic = self.omic[beta_columns.intersection(set(features_array))]
+
+    def serialize(self, filepath):
+        pickle.dump(
+            {"omic": self.omic, "pheno": self.pheno},
+            open(filepath, "wb")
+        )
 
     def __str__(self):
         return "OMIC \n {} values for {} samples \n {} \n PHENO \n {} values for {} samples \n {}".format(
-            self.beta.shape[1], self.beta.shape[0], self.beta.head(),
+            self.omic.shape[1], self.omic.shape[0], self.omic.head(),
             self.pheno.shape[1], self.pheno.shape[0], self.pheno.head())
