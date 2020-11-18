@@ -11,7 +11,7 @@ def enrichr_query(gene_list, library):
     }
     add_list_response = requests.post(enrichr_add_list_url, files=payload)
     if not add_list_response.ok:
-        raise Exception('Error analyzing gene list')
+        raise Exception("Error analyzing gene list: {}".format(add_list_response.text))
 
     query_string = '?userListId=%s&backgroundType=%s'
     user_list_id = add_list_response.json()["userListId"]
