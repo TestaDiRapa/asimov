@@ -127,10 +127,28 @@ class OmicArray:
         self.omic = self.omic[beta_columns.intersection(set(features_array))]
 
     def serialize(self, filepath):
+        """
+        Serializes the object to a pickle file
+        :param filepath: the filepath
+        """
         pickle.dump(
             {"omic": self.omic, "pheno": self.pheno},
             open(filepath, "wb")
         )
+
+    def count_classes(self, pheno_column):
+        """
+        Counts the different types of classes in a column of the pheno df
+        :param pheno_column: The column
+        :return: a dictionary
+        """
+        count = dict()
+        for el in self.pheno[pheno_column].unique():
+            count[el] = 0
+
+        for index, row in self.pheno.iterrows():
+            count[row[pheno_column]] += 1
+        return count
 
     def __str__(self):
         return "OMIC \n {} values for {} samples \n {} \n PHENO \n {} values for {} samples \n {}".format(
