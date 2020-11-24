@@ -37,4 +37,8 @@ def create_methylation_dataset(folders, islands=None, filters=dict()):
         except KeyError:
             print("Skipping file")
     new_dataset = new_dataset.set_index("barcode")
+    print(new_dataset)
+    new_dataset = new_dataset.dropna(axis=1)
+    print()
+    print(new_dataset)
     return new_dataset

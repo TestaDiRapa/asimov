@@ -3,7 +3,7 @@ from dataset.methylation450 import create_methylation_dataset
 from methylnet_utils import generate_subtype_methylation_array
 import pandas as pd
 import pickle
-
+"""
 pam50_genes = open("../data/PAM50_genes.txt").read().split('\n')
 pam50_ENSG = open("../data/PAM50_ENSG.txt").read().split('\n')
 gene_to_cpgs = pickle.load(open("../data/genes_cpg_interaction.pkl", "rb"))
@@ -31,10 +31,9 @@ print(len(pam50_cpgs))
 print(len(cpg_27k.intersection(index_)))
 pickle.dump(cpg_27k, open("../data/cpg_list_27k.pkl", "wb"))
 cpg_27k = cpg_27k.intersection(index_)
-
-islands, num_files = feature_counter(["../data/breast_methylation_27K"], r'^jhu-usc\..+txt$', "Composite Element REF",
-                                     ["Composite Element REF", "Beta_value"])
-
+"""
+islands, num_files = feature_counter(["../../data/raw/breast_methylation_27K"], r'^jhu-usc\..+txt$',
+                                     "Composite Element REF", ["Composite Element REF", "Beta_value"])
 # islands, num_files = filter_cpg_islands(["../data/breast_methylation_450", "../data/lung_methylation_450"])
 # pickle.dump(islands, open("../data/lung_methylation_450.pkl", "wb"))
 # islands, num_files = pickle.load(open("../data/breast_methylation_450.pkl", "rb")), 893  # +920
@@ -81,22 +80,37 @@ for cpg, num_instances in islands.items():
     else:
         count["9-0"] += 1
 
-dataset = create_methylation_dataset("../data/breast_methylation_27K", cpg_islands)
-print(dataset)
-dataset = dataset[cpg_27k].dropna()
-print(dataset)
-ma = generate_subtype_methylation_array("../data/breast_clinical", dataset)
-pickle.dump(ma, open("../data/breast_methylation_27k.pkl", "wb"))
+dataset = create_methylation_dataset("../../data/raw/breast_methylation_27K", cpg_islands)
+ma = generate_subtype_methylation_array("../../data/raw/breast_clinical", dataset)
+pickle.dump(ma, open("../../data/breast/methylation/breast_methylation_27k.pkl", "wb"))
 
-deep_cc_brca = pd.read_csv("../data/deep_cc_brca.csv", index_col=1).rename(index=lambda b: "-".join(b.split("-")[:4])[:-1])
+deep_cc_brca = pd.read_csv("../../data/features/gt/deep_cc_brca.csv", index_col=1)
+deep_cc_brca = deep_cc_brca.rename(index=lambda b: "-".join(b.split("-")[:4])[:-1])
 deep_cc_brca = deep_cc_brca.dropna()
 deep_cc_index = set(deep_cc_brca.index.values)
 
 
-gt_check = pd.read_csv("../data/brca_tcga_pub_clinical_data.tsv", sep="\t", na_filter=False, index_col="Sample ID")
+gt_check = pd.read_csv("../../data/features/gt/brca_tcga_pub_clinical_data.tsv",
+                       sep="\t", na_filter=False, index_col="Sample ID")
 gt_index = set(gt_check.index.values)
-
 
 dataset = dataset.rename(index=lambda b: "-".join(b.split("-")[:4])[:-1])
 index_ = set(dataset.index.values)
 
+print("Deep CC overlap: {}".format(len(deep_cc_index.intersection(index_))))
+print("GT overlap: {}".format(len(gt_index.intersection(index_))))
+
+to_remove = list()
+for pheno_index, row in ma["pheno"].iterrows():
+    if row["subtype"] != "control":
+        barcode = "-".join(pheno_index.split("-")[:4])[:-1]
+        if barcode in gt_index and gt_check.loc[barcode]["PAM50 subtype"] != "Normal-like":
+            ma["pheno"].at[pheno_index, "subtype"] = gt_check.loc[barcode]["PAM50 subtype"]
+        else:
+            to_remove.append(pheno_index)
+
+ma["beta"] = ma["beta"].drop(to_remove)
+ma["pheno"] = ma["pheno"].drop(to_remove)
+
+pickle.dump(ma, open("../../data/breast/methylation/breast_methylation_27k.pkl", "wb"))
+print(ma)

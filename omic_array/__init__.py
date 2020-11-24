@@ -115,7 +115,7 @@ class OmicArray:
         :param omic_array: Another OmicArray
         """
         
-        self.omic = self.omic.append(omic_array.beta)
+        self.omic = self.omic.append(omic_array.omic)
         self.pheno = self.pheno.append(omic_array.pheno)
 
     def select_features_omic(self, features_array):
