@@ -7,26 +7,42 @@ from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 import matplotlib.pyplot as plt
+import math
 import numpy as np
 import pickle
 
 
-# plot function for LDA coefficients
-def plot_lda_coefficients(lda_scalings, plt_title):
-    s = np.abs(lda_scalings.ravel())
-    x_plot, y_plot = list(range(-7, 3)), []
-    for magnitude in range(-7, 3):
-        if magnitude == -7:
-            y_plot.append(np.count_nonzero(s <= 10**-7))
-        elif magnitude == 2:
-            y_plot.append(np.count_nonzero(s > 10**2))
-        else:
-            y_plot.append(np.count_nonzero((10**(magnitude-1) < s) & (s <= 10**magnitude)))
+def plot_lda_coefficients(results):
+    x_plot, y_plot, stds = [], [], []
+    min_magnitude, max_magnitude = 0, 0
+    for subtype, fields in results.items():
+        if min(list(fields["features"].keys())) < min_magnitude:
+            min_magnitude = min(list(fields["features"].keys()))
+        if max(list(fields["features"].keys())) > max_magnitude:
+            max_magnitude = max(list(fields["features"].keys()))
 
+    for m in range(min_magnitude, max_magnitude+1):
+        x_plot.append("10^{}".format(m))
+        count = []
+        for subtype, fields in results.items():
+            if m in fields["features"]:
+                count.append(len(fields["features"][m]))
+            else:
+                count.append(0)
+        y_plot.append(np.mean(count))
+        stds.append(np.std(count))
+
+    print(x_plot)
+    print(y_plot)
+    print(stds)
     plt.figure()
-    plt.bar(x_plot, y_plot)
-    plt.title(plt_title)
+    plt.bar(x_plot, y_plot, yerr=stds)
+    plt.title("Distribution of the parameters magnitude")
     plt.show()
+
+
+def magnitude_order(x):
+    return int(math.log10(x))
 
 
 def train_classifier(x, y, positive_class):
@@ -48,21 +64,26 @@ def train_classifier(x, y, positive_class):
 
 def coefficients_by_magnitude(coefficients, omic_array):
     results = dict()
-    results[-7] = omic_array.get_omic_column_index().to_series().loc[np.abs(coefficients) <= 10**-7].to_list()
-    results[0] = omic_array.get_omic_column_index().to_series().loc[np.abs(coefficients) > 1].to_list()
-    for magnitude in range(-6, 0):
+    start = magnitude_order(min(np.abs(coefficients)))
+    stop = magnitude_order(max(np.abs(coefficients)))
+    results[start] = omic_array.get_omic_column_index().to_series().loc[np.abs(coefficients) <= 10**start].to_list()
+    c = np.count_nonzero(np.abs(coefficients) <= 10**start)
+    for magnitude in range(start+1, stop+1):
         condition = (10**(magnitude-1) < np.abs(coefficients)) & (np.abs(coefficients) <= 10**magnitude)
+        c += np.count_nonzero(condition)
         results[magnitude] = omic_array.get_omic_column_index().to_series().loc[condition].to_list()
     return results
 
 
-def lda_feature_selection(omic_array, shrinkage=None):
+def lda_feature_selection(omic_array, features=None, features_magnitude=None):
     results = dict()
     for subtype in omic_array.pheno_unique_values("subtype"):
         # One-vs-All analysis using a single class
         ova = omic_array.pheno_replace(omic_array.pheno["subtype"] != subtype, "subtype", "Other", inplace=False)
+        if features is not None and features_magnitude is not None:
+            ova.select_features_omic(features[subtype]["features"][features_magnitude])
         # LDA fitting
-        lda = LinearDiscriminantAnalysis(solver="eigen", shrinkage=shrinkage)
+        lda = LinearDiscriminantAnalysis(solver="svd")
         x, y = ova.sklearn_conversion("subtype")
         scaler = StandardScaler()
         x = scaler.fit_transform(x)
@@ -73,7 +94,7 @@ def lda_feature_selection(omic_array, shrinkage=None):
             "sensitivity": sn,
             "specificity": sp,
             "auc": auc,
-            "features": coefficients_by_magnitude(lda.scalings_, omic_array)
+            "features": coefficients_by_magnitude(lda.scalings_, ova)
         }
     return results
 
@@ -119,6 +140,10 @@ if __name__ == "__main__":
     # The genes from the PAM50 panel
     pam50_genes = set(open("../../data/features/PAM50/PAM50_genes.txt").read().split('\n'))
 
+    # The 368 cpg islands
+    cpg_368 = set(open("../../data/features/368/368_cpg.txt").read().split('\n'))
+    cpg_368_t = set(open("../../data/features/368/368_tumor_cpg.txt").read().split('\n'))
+
     # Loading details about CpG sites
     cpg_info = pickle.load(open("../../data/features/cpg_info.pkl", "rb"))
 
@@ -130,8 +155,39 @@ if __name__ == "__main__":
 
     # Loading the methylation 450k values for breast cancer
     bm_450 = OmicArray(filename="../../data/breast/methylation/breast_450k_final.pkl")
-    # bm_450.select_features_omic(pam50_cpg)
 
+    bm_27 = OmicArray(filename="../../data/breast/methylation/breast_methylation_27k.pkl")
+
+    common_index = bm_27.get_omic_column_index().intersection(bm_450.get_omic_column_index())
+    bm_450.append(bm_27)
+    bm_450.select_features_omic(common_index.to_list())
+
+    bm_450.select_features_omic(pam50_cpg.union(cpg_368_t))
+
+    run_1 = lda_feature_selection(bm_450)
+    for k, v in run_1.items():
+        print("{} - Sn: {:.2f} - Sp: {:.2f} - AUC: {:.2f}".format(k, v["sensitivity"], v["specificity"], v["auc"]))
+    print()
+    plot_lda_coefficients(run_1)
+    highest_mag = set()
+    for k, v in run_1.items():
+        highest_mag = highest_mag.union(v["features"][-1])
+
+    # plot_lda_coefficients(lda_feature_selection(bm_450))
+    for k, v in lda_feature_selection(bm_450, features=run_1, features_magnitude=-1).items():
+        print("{} - Sn: {:.2f} - Sp: {:.2f} - AUC: {:.2f}".format(k, v["sensitivity"], v["specificity"], v["auc"]))
+    print()
+    gene_highest = set()
+    for c in highest_mag:
+        gene_highest = gene_highest.union(cpg_info[c]["genes"])
+
+    library = "KEGG_2019_Human"
+
+    pathways = enrichr_query(list(gene_highest), library)
+    for p in pathways[library][:15]:
+        print(p[1])
+
+    exit()
     # LDA example using different shrinkage values
     shrinkage_results = dict()
     for i in np.linspace(10**-4, 1, 50):
