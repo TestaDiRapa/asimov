@@ -81,7 +81,12 @@ def lda_feature_selection(omic_array, features=None, features_magnitude=None):
         # One-vs-All analysis using a single class
         ova = omic_array.pheno_replace(omic_array.pheno["subtype"] != subtype, "subtype", "Other", inplace=False)
         if features is not None and features_magnitude is not None:
-            ova.select_features_omic(features[subtype]["features"][features_magnitude])
+            if type(features_magnitude) != list:
+                features_magnitude = [features_magnitude]
+            tmp_features = []
+            for m in features_magnitude:
+                tmp_features += features[subtype]["features"][m]
+            ova.select_features_omic(tmp_features)
         # LDA fitting
         lda = LinearDiscriminantAnalysis(solver="svd")
         x, y = ova.sklearn_conversion("subtype")
@@ -129,7 +134,7 @@ def sgd_feature_selection(omic_array, l2_regularization=0.0001):
             "sensitivity": sensitivity,
             "specificity": specificity,
             "auc": auc,
-            "features": coefficients_by_magnitude(sgd.coef_[0], omic_array)
+            "features": coefficients_by_magnitude(sgd.coef_[0], ova)
         }
     return results
 
@@ -171,10 +176,10 @@ if __name__ == "__main__":
     plot_lda_coefficients(run_1)
     highest_mag = set()
     for k, v in run_1.items():
-        highest_mag = highest_mag.union(v["features"][-1])
+        highest_mag = highest_mag.union(v["features"][0])
 
     # plot_lda_coefficients(lda_feature_selection(bm_450))
-    for k, v in lda_feature_selection(bm_450, features=run_1, features_magnitude=-1).items():
+    for k, v in lda_feature_selection(bm_450, features=run_1, features_magnitude=0).items():
         print("{} - Sn: {:.2f} - Sp: {:.2f} - AUC: {:.2f}".format(k, v["sensitivity"], v["specificity"], v["auc"]))
     print()
     gene_highest = set()
