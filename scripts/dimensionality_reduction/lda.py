@@ -1,3 +1,4 @@
+from dataset.dimensionality_reduction import coefficients_by_magnitude
 from enrichr import enrichr_query
 from omic_array import OmicArray
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -7,7 +8,6 @@ from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 import matplotlib.pyplot as plt
-import math
 import numpy as np
 import pickle
 
@@ -41,10 +41,6 @@ def plot_lda_coefficients(results):
     plt.show()
 
 
-def magnitude_order(x):
-    return int(math.log10(x))
-
-
 def train_classifier(x, y, positive_class):
     splitter = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
     for train_index, test_index in splitter.split(x, y):
@@ -60,19 +56,6 @@ def train_classifier(x, y, positive_class):
     specificity = report["0"]["recall"]
     auc = roc_auc_score(y_test, y_pred)
     return sensitivity, specificity, auc
-
-
-def coefficients_by_magnitude(coefficients, omic_array):
-    results = dict()
-    start = magnitude_order(min(np.abs(coefficients)))
-    stop = magnitude_order(max(np.abs(coefficients)))
-    results[start] = omic_array.get_omic_column_index().to_series().loc[np.abs(coefficients) <= 10**start].to_list()
-    c = np.count_nonzero(np.abs(coefficients) <= 10**start)
-    for magnitude in range(start+1, stop+1):
-        condition = (10**(magnitude-1) < np.abs(coefficients)) & (np.abs(coefficients) <= 10**magnitude)
-        c += np.count_nonzero(condition)
-        results[magnitude] = omic_array.get_omic_column_index().to_series().loc[condition].to_list()
-    return results
 
 
 def lda_feature_selection(omic_array, features=None, features_magnitude=None):
@@ -99,7 +82,7 @@ def lda_feature_selection(omic_array, features=None, features_magnitude=None):
             "sensitivity": sn,
             "specificity": sp,
             "auc": auc,
-            "features": coefficients_by_magnitude(lda.scalings_, ova)
+            "features": coefficients_by_magnitude(lda.scalings_, ova)[feats]
         }
     return results
 
@@ -134,7 +117,7 @@ def sgd_feature_selection(omic_array, l2_regularization=0.0001):
             "sensitivity": sensitivity,
             "specificity": specificity,
             "auc": auc,
-            "features": coefficients_by_magnitude(sgd.coef_[0], ova)
+            "features": coefficients_by_magnitude(sgd.coef_[0], ova)["feats"]
         }
     return results
 
