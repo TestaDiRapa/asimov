@@ -11,7 +11,7 @@ def magnitude_order(x):
     return int(math.log10(x))
 
 
-def coefficients_by_magnitude(coefficients, omic_array):
+def coefficients_by_magnitude(coefficients, offsets, omic_array):
     """
     Given a set of coefficients and an omic array, returns a dictionary where each key is an order of magnitude and
     each value is another dictionary that contains the features for each order of magnitude of the coefficients.
@@ -24,7 +24,8 @@ def coefficients_by_magnitude(coefficients, omic_array):
     stop = magnitude_order(max(np.abs(coefficients)))
     results[start] = {
         "feats": omic_array.get_omic_column_index().to_series().loc[np.abs(coefficients) <= 10**start].to_list(),
-        "coefficients": coefficients[np.abs(coefficients) <= 10**start]
+        "coefficients": coefficients[np.abs(coefficients) <= 10**start],
+        "offsets": offsets[np.abs(coefficients) <= 10**start]
     }
     c = np.count_nonzero(np.abs(coefficients) <= 10**start)
     for magnitude in range(start+1, stop+1):
@@ -32,6 +33,7 @@ def coefficients_by_magnitude(coefficients, omic_array):
         c += np.count_nonzero(condition)
         results[magnitude] = {
             "feats": omic_array.get_omic_column_index().to_series().loc[condition].to_list(),
-            "coefficients": coefficients[condition]
+            "coefficients": coefficients[condition],
+            "offsets": offsets[condition]
         }
     return results
