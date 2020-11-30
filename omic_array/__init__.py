@@ -1,3 +1,4 @@
+import pandas as pd
 import pickle
 
 
@@ -149,6 +150,19 @@ class OmicArray:
         for index, row in self.pheno.iterrows():
             count[row[pheno_column]] += 1
         return count
+
+    def filter_classes(self, filter_column, *args):
+        filtered_rows = []
+        for barcode, row in self.pheno.iterrows():
+            if row[filter_column] in args:
+                filtered_rows.append(barcode)
+
+        self.pheno = self.pheno.loc[filtered_rows]
+        self.omic = self.omic.loc[filtered_rows]
+
+    def scale_features(self, scaler):
+        self.omic = pd.DataFrame(scaler.fit_transform(self.omic.values),
+                                 columns=self.omic.columns, index=self.omic.index)
 
     def __str__(self):
         return "OMIC \n {} values for {} samples \n {} \n PHENO \n {} values for {} samples \n {}".format(
