@@ -39,10 +39,7 @@ def roc_curve(omic_array, results, positive, negative, magnitudes=None):
         x_axis.append(1 - report[negative]["recall"])
         y_axis.append(report[positive]["recall"])
 
-    plt.figure()
-    plt.plot(x_axis, y_axis)
-    plt.title("{} vs {}".format(positive, negative))
-    plt.show()
+    return x_axis, y_axis
 
 
 if __name__ == "__main__":
