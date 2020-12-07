@@ -2,7 +2,7 @@ from dataset.dimensionality_reduction import coefficients_by_magnitude
 import matplotlib.pyplot as plt
 from omic_array import OmicArray
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.metrics import classification_report
+from sklearn.metrics import auc, roc_curve
 from sklearn.preprocessing import StandardScaler
 import numpy as np
 import pickle
@@ -18,7 +18,7 @@ def lda_feature_selection(omic_array):
     return coefficients_by_magnitude(lda.scalings_, lda.xbar_.reshape(-1, 1), omic_array)
 
 
-def roc_curve(omic_array, results, positive, negative, magnitudes=None):
+def roc_curve_magnitude(omic_array, results, positive, negative, magnitudes=None):
     if magnitudes is None:
         magnitudes = list(results.keys())
 
@@ -31,15 +31,13 @@ def roc_curve(omic_array, results, positive, negative, magnitudes=None):
     omic_array.omic = omic_array.omic[features]
     x, y = omic_array.sklearn_conversion("subtype")
     x = np.dot(x-offsets, scalings)
-    thresholds = np.append(np.sort(x), np.max(x)+1)
-    x_axis, y_axis = [], []
-    for t in thresholds:
-        y_pred = [negative if f < t else positive for f in x]
-        report = classification_report(y.ravel(), y_pred, output_dict=True)
-        x_axis.append(1 - report[negative]["recall"])
-        y_axis.append(report[positive]["recall"])
 
-    return x_axis, y_axis
+    x_axis, y_axis, _ = roc_curve(y, x, pos_label=positive)
+
+    if x_axis[1] > y_axis[1]:
+        x_axis, y_axis, _ = roc_curve(y, x, pos_label=negative)
+
+    return x_axis, y_axis, auc(x_axis, y_axis)
 
 
 if __name__ == "__main__":
@@ -83,6 +81,7 @@ if __name__ == "__main__":
         dataset.select_features_omic(pam50_cpg.union(cpg_368_t))
 
     subtypes = dataset.pheno_unique_values("subtype")
+    to_plot = dict()
     for i in range(len(subtypes)):
         subtype_1 = subtypes[i]
         for j in range(i+1, len(subtypes)):
@@ -91,6 +90,15 @@ if __name__ == "__main__":
             work_dataset.filter_classes("subtype", subtype_1, subtype_2)
             work_dataset.scale_features(StandardScaler())
             r = lda_feature_selection(work_dataset)
-            roc_curve(work_dataset, r, subtype_1, subtype_2)
+            fnr, tpr, a = roc_curve_magnitude(work_dataset, r, subtype_1, subtype_2)
+            to_plot["{} vs {} (AUC = {:.2f}".format(subtype_1, subtype_2, a)] = (fnr, tpr)
+
+    plt.figure()
+    for k, v in to_plot.items():
+        plt.plot(v[0], v[1], label=k)
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.legend(loc="best")
+    plt.show()
 
 
